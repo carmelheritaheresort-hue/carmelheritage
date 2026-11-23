@@ -11,7 +11,11 @@ types.setTypeParser(1700, v => parseFloat(v));   // numeric
 let pool = null;
 function getPool() {
   if (pool) return pool;
-  if (!config.databaseUrl) throw new Error('DATABASE_URL is not set. Add the Supabase connection string to .env (see README).');
+  if (!config.databaseUrl) {
+    throw new Error(config.isServerless
+      ? 'DATABASE_URL is not set in Vercel. Add it under Project > Settings > Environment Variables (paste the contents of .env.vercel), then redeploy.'
+      : 'DATABASE_URL is not set. Add the Supabase connection string to .env (see README).');
+  }
   // Supabase requires TLS. Its certificate is not in Node's default store, so either supply the CA
   // (DATABASE_CA_CERT, from Supabase > Project Settings > Database > SSL) or accept the encrypted connection without CA pinning.
   const url = new URL(config.databaseUrl);
