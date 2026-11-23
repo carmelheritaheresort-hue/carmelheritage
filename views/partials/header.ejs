@@ -1,0 +1,42 @@
+<a class="skip-link" href="#main">Skip to main content</a>
+<% const nameParts = String(s.site_name).split(' '); const brand1 = nameParts.shift(); const brand2 = nameParts.join(' '); %>
+<header class="site-header" data-header>
+  <div class="topbar">
+    <div class="container topbar-inner">
+      <span class="tb-tag">Rooted in the traditions of Ayurveda since 1983</span>
+      <span class="tb-links">
+        <% phones.forEach(function (p) { %><a href="<%= tel(p) %>" data-track="Call Click"><%= p %></a><% }) %>
+      </span>
+    </div>
+  </div>
+  <div class="container header-inner">
+    <a class="brand" href="/" aria-label="<%= s.site_name %> home">
+      <img src="/img/logo-emblem-gold.png" alt="" width="52" height="51">
+      <span class="brand-text" aria-hidden="true"><span class="brand-1"><%= brand1 %></span><% if (brand2) { %><span class="brand-2"><%= brand2 %></span><% } %></span>
+    </a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+      <span class="menu-bars" aria-hidden="true"></span><span class="menu-label">Menu</span>
+    </button>
+    <nav id="site-nav" class="site-nav" aria-label="Main">
+      <ul class="nav-list">
+        <% nav.forEach(function (item) {
+             const active = item.path === '/' ? currentPath === '/' : (currentPath === item.path || currentPath.indexOf(item.path + '/') === 0); %>
+          <li class="<%= item.children ? 'has-sub' : '' %>">
+            <a href="<%= item.path %>"<%- active ? ' aria-current="page"' : '' %>><%= item.name %></a>
+            <% if (item.children) { %>
+              <ul class="sub-list">
+                <% item.children.forEach(function (c) { %>
+                  <li><a href="<%= c.path %>"<%- currentPath === c.path ? ' aria-current="page"' : '' %>><%= c.name %></a></li>
+                <% }) %>
+              </ul>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+      <div class="nav-actions">
+        <a class="btn btn-whatsapp btn-sm" href="<%= waLink('Hello ' + s.site_name + ', I\u2019d like to make an enquiry.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">WhatsApp</a>
+        <a class="btn btn-gold btn-sm" href="/book">Book Now</a>
+      </div>
+    </nav>
+  </div>
+</header>

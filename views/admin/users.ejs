@@ -1,0 +1,24 @@
+<%- include('_top', { title: 'Users' }) %>
+<h1>Users</h1>
+<p>Roles: <strong>admin</strong> (everything), <strong>editor</strong> (website content), <strong>staff</strong> (enquiries only).</p>
+<% if (ok) { %><p class="ok" role="status">User created.</p><% } %>
+<table>
+  <thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Active</th><th scope="col">Last sign-in</th><th scope="col">Action</th></tr></thead>
+  <tbody>
+    <% users.forEach(function (u) { %>
+      <tr><td><%= u.name %></td><td><%= u.email %></td><td><%= u.role %></td><td><%= u.active ? 'Yes' : 'No' %></td><td><%= fmtDateTime(u.last_login_at) %></td>
+        <td><% if (u.id !== user.id) { %><form method="post" action="/admin/users/<%= u.id %>/toggle" class="inline-form"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn-link" type="submit"><%= u.active ? 'Deactivate' : 'Reactivate' %><span class="sr-only"> <%= u.name %></span></button></form><% } %></td></tr>
+    <% }) %>
+  </tbody>
+</table>
+<h2>Add a user</h2>
+<% if (error) { %><p class="error" role="alert"><%= error %></p><% } %>
+<form method="post" action="/admin/users" class="stack">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="field"><label for="u-name">Name</label><input id="u-name" name="name" required></div>
+  <div class="field"><label for="u-email">Email</label><input id="u-email" name="email" type="email" required></div>
+  <div class="field"><label for="u-role">Role</label><select id="u-role" name="role"><option value="staff">staff</option><option value="editor">editor</option><option value="admin">admin</option></select></div>
+  <div class="field"><label for="u-pw">Temporary password (at least 12 characters)</label><input id="u-pw" name="password" type="password" autocomplete="new-password" minlength="12" required></div>
+  <button class="btn" type="submit">Create user</button>
+</form>
+<%- include('_bottom') %>

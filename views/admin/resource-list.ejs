@@ -1,0 +1,20 @@
+<%- include('_top', { title: def.label }) %>
+<h1><%= def.label %></h1>
+<% if (def.intro) { %><p><%= def.intro %></p><% } %>
+<% if (!def.noCreate) { %><p><a class="btn" href="/admin/content/<%= resName %>/new">Add <%= def.singular %></a></p><% } %>
+<% if (items.length) { %>
+<table>
+  <thead><tr><% def.cols.forEach(function (c) { const f = def.fields.find(function (x) { return x.name === c; }); %><th scope="col"><%= f ? f.label.split(' (')[0] : c %></th><% }) %><th scope="col">Edit</th></tr></thead>
+  <tbody>
+    <% items.forEach(function (it) { %>
+      <tr>
+        <% def.cols.forEach(function (c) { const f = def.fields.find(function (x) { return x.name === c; }); %>
+          <td><%= f && f.type === 'bool' ? (it[c] ? 'Yes' : 'No') : it[c] %></td>
+        <% }) %>
+        <td><a href="/admin/content/<%= resName %>/<%= it.id %>">Edit<span class="sr-only"> item <%= it.id %></span></a></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+<% } else { %><p>Nothing here yet.</p><% } %>
+<%- include('_bottom') %>

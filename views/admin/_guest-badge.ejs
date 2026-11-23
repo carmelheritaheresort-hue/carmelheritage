@@ -1,0 +1,7 @@
+<% if (locals.guest) { %>
+<p class="note">Guest profile: <a href="/admin/guests/<%= guest.id %>"><%= guest.name %></a>
+  <% if (guest.bookings_count >= 2) { %>&middot; <strong>Returning guest</strong>, <%= guest.bookings_count %> bookings, <%= guest.nights %> nights<% } else if (guest.bookings_count === 1) { %>&middot; 1 booking<% } else { %>&middot; no bookings yet<% } %>
+  <% if (guest.enquiries_count) { %>&middot; <%= guest.enquiries_count %> enquir<%= guest.enquiries_count === 1 ? 'y' : 'ies' %><% } %>
+  <% if (guest.notes) { %><br><strong>Staff notes:</strong> <%= guest.notes %><% } %>
+</p>
+<% } %>

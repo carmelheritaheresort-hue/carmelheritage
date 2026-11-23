@@ -1,0 +1,29 @@
+<section class="section" aria-labelledby="loc-h">
+  <div class="container split">
+    <div>
+      <p class="eyebrow">Location</p>
+      <h2 id="loc-h">At Bhoothathankettu, near <em>Kothamangalam</em></h2>
+      <img class="ornament left" src="/img/ornament.svg" alt="" width="200" height="20">
+      <p><%= s.site_name %> is at Bhoothathankettu, near Kothamangalam in Ernakulam district, Kerala.</p>
+      <div class="btn-row">
+        <% if (directionsUrl) { %><a class="btn btn-primary" href="<%= directionsUrl %>" target="_blank" rel="noopener">Get directions<span class="sr-only"> (opens in a new tab)</span></a><% } %>
+        <a class="btn btn-outline" href="/contact">Contact and directions</a>
+      </div>
+      <% if (!directionsUrl) { %><p class="small mt">For directions, please call the Centre.</p><% } %>
+    </div>
+    <div>
+      <% if (mapEmbed) { %>
+        <div class="frame"><div class="frame-inner map"><iframe title="Map showing the location of <%= s.site_name %>" src="<%= mapEmbed %>" loading="lazy" referrerpolicy="no-referrer-when-downgrade" width="600" height="420"></iframe></div></div>
+      <% } else { %>
+        <div class="info-card">
+          <h3><%= s.org_name %></h3>
+          <ul class="info-list">
+            <li><span class="k">Address</span><span><%= address %></span></li>
+            <% phones.forEach(function (p, i) { %><li><span class="k">Phone<%= phones.length > 1 ? ' ' + (i + 1) : '' %></span><a href="<%= tel(p) %>" data-track="Call Click"><%= p %></a></li><% }) %>
+            <% if (s.contact_email) { %><li><span class="k">Email</span><a href="mailto:<%= s.contact_email %>"><%= s.contact_email %></a></li><% } %>
+          </ul>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</section>

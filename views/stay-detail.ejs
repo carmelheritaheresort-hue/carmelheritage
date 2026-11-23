@@ -1,0 +1,25 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main">
+  <%- include('partials/page-hero', { heroEyebrow: 'Stay', heroTitle: esc(type.name) + ' at <em>' + esc(s.site_name) + '</em>', heroLead: type.total_units + ' ' + (type.kind === 'cottage' ? 'cottages' : 'standard rooms') + ' in total at the Centre, Bhoothathankettu, Kothamangalam.', heroImage: type.photo, heroAlt: type.photo_alt }) %>
+  <section class="section bg-parchment">
+    <div class="container">
+      <%- include('partials/acc-card', { card: type, detail: true, headingTag: 'h2' }) %>
+    </div>
+  </section>
+  <section class="section-tight">
+    <div class="container narrow">
+      <p class="note">The number above is the Centre's total. The <a href="/book">booking page</a> shows what is free for your dates. The Centre confirms every booking after payment. See the <a href="/booking-cancellation-policy">Booking and Cancellation Policy</a>.</p>
+      <% if (s.check_in_time || s.check_out_time) { %>
+        <p><% if (s.check_in_time) { %>Check-in: <%= s.check_in_time %>. <% } %><% if (s.check_out_time) { %>Check-out: <%= s.check_out_time %>.<% } %></p>
+      <% } %>
+      <h2 class="h3">Other accommodation</h2>
+      <ul>
+        <% others.forEach(function (o) { %><li><a href="/stay/<%= o.slug %>"><%= o.name %></a> (<%= o.total_units %> in total)</li><% }) %>
+        <li><a href="/stay">All accommodation</a></li>
+      </ul>
+    </div>
+  </section>
+  <%- include('partials/cta') %>
+</main>
+<%- include('partials/footer') %>

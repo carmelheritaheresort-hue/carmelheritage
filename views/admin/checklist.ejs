@@ -1,0 +1,24 @@
+<%- include('_top', { title: 'Pre-launch checklist' }) %>
+<h1>Pre-launch checklist</h1>
+<p>Tick each item only after the owner has verified it. When everything is verified, go to <a href="/admin/settings">Settings</a> and tick "Site is live".</p>
+<% if (saved) { %><p class="ok" role="status">Checklist saved.</p><% } %>
+<% const done = items.filter(function (i) { return checked.has(i.id); }).length; %>
+<p><strong><%= done %> of <%= items.length %></strong> verified.</p>
+<form method="post" action="/admin/checklist" class="stack">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <ul class="plain checklist">
+    <% items.forEach(function (i) { %>
+      <li>
+        <label class="check"><input type="checkbox" name="chk_<%= i.id %>" value="1"<%= checked.has(i.id) ? ' checked' : '' %>> <%= i.label %></label>
+        <a href="<%= i.link %>">Review</a>
+        <% if (hints[i.id]) { %><span class="help"><%= hints[i.id] %></span><% } %>
+      </li>
+    <% }) %>
+  </ul>
+  <button class="btn" type="submit">Save checklist</button>
+</form>
+<h2>Settings that need owner confirmation</h2>
+<ul>
+  <% review.forEach(function (d) { %><li><%= d.label %>: <code><%= d.type === 'bool' ? (s[d.key] ? 'on' : 'off') : (String(s[d.key]).length > 60 ? String(s[d.key]).slice(0, 60) + '...' : (s[d.key] || '(empty)')) %></code></li><% }) %>
+</ul>
+<%- include('_bottom') %>

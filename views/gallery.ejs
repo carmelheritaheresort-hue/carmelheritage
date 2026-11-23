@@ -1,0 +1,26 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main">
+  <%- include('partials/page-hero', { heroEyebrow: s.site_name, heroTitle: 'Glimpses of the <em>village</em>', heroLead: 'Images of ' + s.site_name + ' at Bhoothathankettu.' }) %>
+  <section class="section">
+    <div class="container">
+      <% if (gallery.length) { %>
+        <ul class="gallery-grid<%= gallery.length < 5 ? ' few' : '' %>">
+          <% gallery.forEach(function (g) { %>
+            <li><figure>
+              <%- img(g.image, g.alt) %>
+              <% if (g.caption || g.is_illustration) { %><figcaption><%= g.caption %><% if (g.is_illustration) { %> <em>(Illustration, not a photograph of the property)</em><% } %></figcaption><% } %>
+            </figure></li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <div class="empty-state">
+          <img src="/img/logo-emblem.png" alt="" width="72" height="71">
+          <p>Photographs will be added once the Centre has approved them. Please contact the Centre if you would like to see images of the cottages or rooms.</p>
+        </div>
+      <% } %>
+    </div>
+  </section>
+  <%- include('partials/cta') %>
+</main>
+<%- include('partials/footer') %>

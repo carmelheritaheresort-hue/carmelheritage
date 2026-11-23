@@ -1,0 +1,28 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main">
+  <%- include('partials/page-hero', { heroEyebrow: s.org_name, heroTitle: 'Management', heroLead: s.management_intro || '' }) %>
+  <section class="section">
+    <div class="container">
+      <% if (people.length) { %>
+        <ul class="tiles">
+          <% people.forEach(function (p) { %>
+            <li class="tile">
+              <% if (p.photo) { %><div class="tile-media"><%- img(p.photo, p.photo_alt) %></div><% } %>
+              <h2><%= p.name %></h2>
+              <% if (p.role) { %><p class="eyebrow"><%= p.role %></p><% } %>
+              <% if (p.bio) { %><%- renderText(p.bio) %><% } %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } else { %>
+        <div class="empty-state">
+          <img src="/img/logo-emblem.png" alt="" width="72" height="71">
+          <p>Information about the Centre's management will be added here. To learn about the Centre's background, read <a href="/about">About the Centre</a>.</p>
+        </div>
+      <% } %>
+    </div>
+  </section>
+  <%- include('partials/cta') %>
+</main>
+<%- include('partials/footer') %>

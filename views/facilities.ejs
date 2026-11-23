@@ -1,0 +1,28 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main">
+  <%- include('partials/page-hero', { heroEyebrow: 'At the Centre', heroTitle: 'Facilities and <em>experiences</em>', heroLead: 'What is available at ' + s.site_name + ', as confirmed by the Centre.', heroImage: s.facilities_image, heroAlt: s.facilities_image_alt }) %>
+  <section class="section">
+    <div class="container">
+      <% if (facilities.length) { %>
+        <ul class="tiles">
+          <% facilities.forEach(function (f) { %>
+            <li class="tile">
+              <h2><%= f.name %></h2>
+              <% if (f.description) { %><%- renderText(f.description) %><% } %>
+              <% if (f.availability) { %><p class="small"><%= f.availability %></p><% } %>
+            </li>
+          <% }) %>
+        </ul>
+        <p class="small center mt">Availability can change. Please confirm with the Centre when you enquire.</p>
+      <% } else { %>
+        <div class="empty-state">
+          <img src="/img/logo-emblem.png" alt="" width="72" height="71">
+          <p>Facilities and experiences will be listed here once the Centre has confirmed them. Please contact the Centre to ask what is available.</p>
+        </div>
+      <% } %>
+    </div>
+  </section>
+  <%- include('partials/cta') %>
+</main>
+<%- include('partials/footer') %>

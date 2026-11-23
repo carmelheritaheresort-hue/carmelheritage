@@ -1,0 +1,23 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main">
+  <%- include('partials/page-hero', { heroEyebrow: 'Stay', heroTitle: 'Stay at <em>' + esc(s.site_name) + '</em>', heroLead: 'The Centre has ' + types.map(function (t) { return t.total_units + ' ' + t.name.toLowerCase(); }).join(' and ') + ' in total.', heroImage: s.stay_image, heroAlt: s.stay_image_alt }) %>
+  <section class="section bg-parchment">
+    <div class="container">
+      <div class="section-head">
+        <p class="lead">Choose your dates on the <a href="/book">booking page</a> to see which rooms are free, then book and pay online. The Centre confirms every booking after payment.</p>
+      </div>
+      <% types.forEach(function (t, i) { %><%- include('partials/acc-card', { card: t, reverse: i % 2 === 1, headingTag: 'h2' }) %><% }) %>
+      <% if (s.check_in_time || s.check_out_time) { %>
+        <p class="center"><% if (s.check_in_time) { %>Check-in: <%= s.check_in_time %>. <% } %><% if (s.check_out_time) { %>Check-out: <%= s.check_out_time %>.<% } %></p>
+      <% } %>
+    </div>
+  </section>
+  <section class="section-tight">
+    <div class="container narrow center">
+      <p>Read the <a href="/booking-cancellation-policy">Booking and Cancellation Policy</a>, or explore <a href="/treatments">Ayurveda treatments</a> and <a href="/facilities">facilities</a>.</p>
+    </div>
+  </section>
+  <%- include('partials/cta') %>
+</main>
+<%- include('partials/footer') %>

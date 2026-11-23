@@ -1,0 +1,67 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<%
+  const paid = ['paid', 'confirmed', 'refunded'].includes(b.status);
+  const heading = b.status === 'confirmed' ? 'Your booking is <em>confirmed</em>'
+    : b.status === 'paid' ? 'Payment <em>received</em>'
+    : b.status === 'pending_payment' ? 'Payment <em>pending</em>'
+    : b.status === 'refunded' ? 'Booking <em>refunded</em>'
+    : b.status === 'cancelled' ? 'Booking <em>cancelled</em>'
+    : 'Payment <em>not completed</em>';
+%>
+<main id="main">
+  <%- include('partials/page-hero', { heroEyebrow: 'Booking ' + b.ref, heroTitle: heading }) %>
+  <section class="section bg-parchment">
+    <div class="narrow">
+      <div class="form-card">
+        <% if (b.status === 'paid') { %>
+          <p class="lead">Thank you, <%= b.name %>. We have received <strong><%= rupees(b.pay_now_paise) %></strong>.</p>
+          <div class="note"><p><strong>What happens next:</strong> the Centre checks your rooms and confirms your booking<%= replyHours ? ' within ' + replyHours + ' hours' : '' %> by phone, WhatsApp or email. If the rooms cannot be provided, the amount you paid is refunded in full.</p></div>
+        <% } else if (b.status === 'confirmed') { %>
+          <p class="lead">Thank you, <%= b.name %>. The Centre has confirmed your stay. We look forward to welcoming you.</p>
+        <% } else if (b.status === 'pending_payment') { %>
+          <p class="lead">We have not received confirmation of your payment yet. If you completed the payment, this page will update within a few minutes. Refresh to check.</p>
+        <% } else if (b.status === 'refunded') { %>
+          <p class="lead">The amount paid for this booking has been refunded. Refunds usually reach your account within 5 to 7 working days, depending on your bank.</p>
+        <% } else if (b.status === 'cancelled') { %>
+          <p class="lead">This booking has been cancelled. Please contact the Centre if you have questions.</p>
+        <% } else { %>
+          <p class="lead">No payment was taken for this booking and the rooms have been released.</p>
+          <p><a class="btn btn-primary" href="/book">Start a new booking</a></p>
+        <% } %>
+
+        <h2 class="h3 mt">Booking details</h2>
+        <dl class="facts">
+          <dt>Reference</dt><dd><strong><%= b.ref %></strong></dd>
+          <dt>Status</dt><dd><%= b.statusLabel %></dd>
+          <dt>Check-in</dt><dd><%= fmtDate(b.check_in) %><%= s.check_in_time ? ', from ' + s.check_in_time : '' %></dd>
+          <dt>Check-out</dt><dd><%= fmtDate(b.check_out) %><%= s.check_out_time ? ', by ' + s.check_out_time : '' %></dd>
+          <dt>Nights</dt><dd><%= b.nights %></dd>
+          <dt>Guests</dt><dd><%= b.adults %> adult<%= b.adults === 1 ? '' : 's' %>, <%= b.children %> child<%= b.children === 1 ? '' : 'ren' %></dd>
+        </dl>
+        <table class="sum-table wide">
+          <tbody>
+            <% b.rooms.forEach(function (r) { %>
+              <tr><th scope="row"><%= r.units %> <%= r.label.toLowerCase() %> &times; <%= b.nights %> night<%= b.nights === 1 ? '' : 's' %> @ <%= rupees(r.rate * 100) %></th><td><%= rupees(r.amount) %></td></tr>
+            <% }) %>
+          </tbody>
+          <tfoot>
+            <tr><th scope="row">Room total</th><td><%= rupees(b.subtotal_paise) %></td></tr>
+            <tr><th scope="row">GST (<%= b.gst_percent %>%)</th><td><%= rupees(b.gst_paise) %></td></tr>
+            <tr class="sum-total"><th scope="row">Total</th><td><%= rupees(b.total_paise) %></td></tr>
+            <tr><th scope="row"><%= paid ? 'Paid online' : 'To pay online' %></th><td><%= rupees(b.pay_now_paise) %></td></tr>
+            <% if (b.balance_paise > 0) { %><tr><th scope="row">Balance due at the Centre</th><td><%= rupees(b.balance_paise) %></td></tr><% } %>
+          </tfoot>
+        </table>
+        <% if (b.provider_payment_id && paid) { %><p class="small">Payment ID: <%= b.provider_payment_id %></p><% } %>
+        <p class="small">Keep this page's address or your reference <strong><%= b.ref %></strong> for your records. <% if (mailOn && paid) { %>A copy has been emailed to <%= b.email %>.<% } %></p>
+        <div class="btn-row">
+          <a class="btn btn-whatsapp" href="<%= waLink('Hello ' + s.site_name + ', I have a question about my booking ' + b.ref + '.') %>" target="_blank" rel="noopener">WhatsApp about this booking</a>
+          <a class="btn btn-outline" href="<%= tel(phones[0] || '') %>">Call <%= phones[0] %></a>
+        </div>
+        <p class="small mt">See the <a href="/booking-cancellation-policy">Booking and Cancellation Policy</a>.</p>
+      </div>
+    </div>
+  </section>
+</main>
+<%- include('partials/footer') %>

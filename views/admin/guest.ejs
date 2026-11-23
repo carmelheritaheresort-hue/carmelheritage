@@ -1,0 +1,89 @@
+<%- include('_top', { title: g.name || 'Guest' }) %>
+<p><a href="/admin/guests">&larr; Guests</a></p>
+<h1><%= g.name || '(no name)' %><% if (g.bookings_count >= 2) { %> <span class="badge b-confirmed">Returning guest</span><% } %></h1>
+<% if (saved) { %><p class="ok" role="status">Saved.</p><% } %>
+<% if (locals.merged) { %><p class="ok" role="status">Profiles merged.</p><% } %>
+
+<div class="stat-grid">
+  <div><strong><%= g.bookings_count %></strong><span>Bookings (paid or confirmed)</span></div>
+  <div><strong><%= g.stays_count %></strong><span>Completed stays</span></div>
+  <div><strong><%= g.nights %></strong><span>Nights booked</span></div>
+  <div><strong><%= g.value_paise ? rupees(g.value_paise) : '-' %></strong><span>Booking value</span></div>
+  <div><strong><%= g.paid_paise ? rupees(g.paid_paise) : '-' %></strong><span>Paid online</span></div>
+  <div><strong><%= g.enquiries_count %></strong><span>Enquiries</span></div>
+</div>
+
+<dl class="details">
+  <dt>Mobile</dt><dd><% if (g.phone) { %><a href="tel:<%= g.phone %>"><%= g.phone %></a> &middot; <a href="https://wa.me/<%= g.phone.replace(/\D/g, '') %>" target="_blank" rel="noopener">WhatsApp</a><% } else { %>-<% } %></dd>
+  <dt>Email</dt><dd><% if (g.email) { %><a href="mailto:<%= g.email %>"><%= g.email %></a><% } else { %>-<% } %></dd>
+  <dt>Guests per stay</dt><dd><% if (h.avgParty) { %>Usually <%= h.avgParty %>, largest <%= g.max_party %> (<%= h.totalAdults %> adult<%= h.totalAdults === 1 ? '' : 's' %> and <%= h.totalChildren %> child<%= h.totalChildren === 1 ? '' : 'ren' %> across all stays)<% } else { %>-<% } %></dd>
+  <dt>Usual room</dt><dd><%= h.preference || '-' %></dd>
+  <dt>Last stay</dt><dd><%= g.last_stay || '-' %></dd>
+  <dt>Next stay</dt><dd><%= g.next_stay || '-' %></dd>
+  <dt>First seen</dt><dd><%= fmtDateTime(g.first_seen_at) %><%= g.source ? ' (' + g.source + ')' : '' %></dd>
+  <dt>Last seen</dt><dd><%= fmtDateTime(g.last_seen_at) %></dd>
+</dl>
+
+<h2>Bookings</h2>
+<table>
+  <thead><tr><th scope="col">Reference</th><th scope="col">Stay</th><th scope="col">Rooms</th><th scope="col">Guests</th><th scope="col">Total</th><th scope="col">Status</th></tr></thead>
+  <tbody>
+  <% h.bookings.forEach(function (b) { %>
+    <tr>
+      <td><a href="/admin/bookings/<%= b.id %>"><%= b.ref %></a></td>
+      <td><%= b.check_in %> to <%= b.check_out %> (<%= b.nights %>n)</td>
+      <td><%= [b.cottage_units ? b.cottage_units + ' cottage' : '', b.standard_units ? b.standard_units + ' standard' : ''].filter(Boolean).join(', ') %></td>
+      <td><%= b.adults %> adults, <%= b.children %> children</td>
+      <td><%= rupees(b.total_paise) %></td>
+      <td><span class="badge b-<%= b.status %>"><%= LABEL[b.status] %></span></td>
+    </tr>
+  <% }) %>
+  <% if (!h.bookings.length) { %><tr><td colspan="6">No bookings yet.</td></tr><% } %>
+  </tbody>
+</table>
+
+<h2>Enquiries</h2>
+<table>
+  <thead><tr><th scope="col">#</th><th scope="col">Received</th><th scope="col">Type</th><th scope="col">Dates</th><th scope="col">Guests</th><th scope="col">Status</th></tr></thead>
+  <tbody>
+  <% h.enquiries.forEach(function (e) { %>
+    <tr>
+      <td><a href="/admin/enquiries/<%= e.id %>"><%= e.id %></a></td>
+      <td><%= fmtDateTime(e.created_at) %></td>
+      <td><%= e.type %></td>
+      <td><%= e.check_in || '-' %><%= e.check_out ? ' to ' + e.check_out : '' %></td>
+      <td><%= e.type === 'stay' ? e.adults + ' adults, ' + e.children + ' children' : '-' %></td>
+      <td><span class="badge s-<%= e.status %>"><%= e.status %></span></td>
+    </tr>
+  <% }) %>
+  <% if (!h.enquiries.length) { %><tr><td colspan="6">No enquiries.</td></tr><% } %>
+  </tbody>
+</table>
+
+<h2>Edit details</h2>
+<form method="post" action="/admin/guests/<%= g.id %>" class="stack">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <%- include('_guest-fields', { f: g, errors: errors }) %>
+  <button class="btn" type="submit">Save</button>
+</form>
+
+<% if (dups.length) { %>
+<h2>Possible duplicates</h2>
+<p class="note">These profiles share a mobile number or email with this guest. Merging moves their bookings and enquiries here and deletes the other profile.</p>
+<ul>
+<% dups.forEach(function (d) { %>
+  <li><a href="/admin/guests/<%= d.id %>"><%= d.name %></a> (<%= d.phone || d.email %>)
+    <form method="post" action="/admin/guests/<%= g.id %>/merge" class="inline-form"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="from" value="<%= d.id %>">
+      <button class="btn-link" type="submit" data-confirm="Merge <%= d.name %> into this profile?">Merge into this profile</button></form></li>
+<% }) %>
+</ul>
+<% } %>
+
+<% if (user.role === 'admin') { %>
+<form method="post" action="/admin/guests/<%= g.id %>/delete" class="inline-form">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <button class="btn danger" type="submit" data-confirm="Delete this guest profile? Their bookings and enquiries are kept but no longer linked.">Delete guest profile</button>
+</form>
+<% } %>
+<script src="/js/admin.js" defer></script>
+<%- include('_bottom') %>

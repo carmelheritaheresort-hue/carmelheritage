@@ -1,0 +1,41 @@
+<%- include('_top', { title: 'Enquiry #' + e.id }) %>
+<p><a href="/admin/enquiries">&larr; All enquiries</a></p>
+<h1>Enquiry #<%= e.id %> <span class="badge s-<%= e.status %>"><%= e.status %></span></h1>
+<% if (saved) { %><p class="ok" role="status">Saved.</p><% } %>
+<p class="note">This is a website enquiry record. The guest may not have sent the WhatsApp message. Confirm availability and the rate with the guest before setting the status to confirmed.</p>
+<%- include('_guest-badge', { guest: guest }) %>
+<dl class="details">
+  <dt>Type</dt><dd><%= e.type %></dd>
+  <dt>Received</dt><dd><%= fmtDateTime(e.created_at) %></dd>
+  <dt>Last updated</dt><dd><%= fmtDateTime(e.updated_at) %></dd>
+  <dt>Name</dt><dd><%= e.name %></dd>
+  <dt>Phone</dt><dd><a href="tel:<%= e.phone %>"><%= e.phone %></a> &middot; <a href="https://wa.me/<%= e.phone.replace(/\D/g, '') %>" target="_blank" rel="noopener">WhatsApp</a></dd>
+  <% if (e.email) { %><dt>Email</dt><dd><a href="mailto:<%= e.email %>"><%= e.email %></a></dd><% } %>
+  <% if (e.type === 'stay') { %>
+    <dt>Check-in</dt><dd><%= e.check_in %></dd>
+    <dt>Check-out</dt><dd><%= e.check_out %></dd>
+    <dt>Adults / children</dt><dd><%= e.adults %> / <%= e.children %></dd>
+    <dt>Preference</dt><dd><%= e.accommodation_pref %></dd>
+    <dt>Units requested</dt><dd><%= e.units %></dd>
+  <% } else { %>
+    <dt>Treatment</dt><dd><%= e.treatment || '-' %></dd>
+    <dt>Preferred date</dt><dd><%= e.check_in || '-' %></dd>
+  <% } %>
+  <dt>Message</dt><dd class="pre"><%= e.message || '-' %></dd>
+</dl>
+<form method="post" action="/admin/enquiries/<%= e.id %>" class="stack">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="field"><label for="status">Status</label>
+    <select id="status" name="status"><% STATUSES.forEach(function (s) { %><option value="<%= s %>"<%= e.status === s ? ' selected' : '' %>><%= s %></option><% }) %></select></div>
+  <div class="field"><label for="internal_notes">Internal notes (never shown to guests)</label>
+    <textarea id="internal_notes" name="internal_notes" rows="6"><%= e.internal_notes %></textarea></div>
+  <button class="btn" type="submit">Save</button>
+</form>
+<% if (user.role === 'admin') { %>
+<form method="post" action="/admin/enquiries/<%= e.id %>/delete" class="inline-form">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <button class="btn danger" type="submit" data-confirm="Delete this enquiry permanently?">Delete enquiry</button>
+</form>
+<% } %>
+<script src="/js/admin.js" defer></script>
+<%- include('_bottom') %>

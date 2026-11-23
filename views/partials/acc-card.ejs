@@ -1,0 +1,40 @@
+<%
+  // Params: card (accommodation type), reverse (bool), detail (bool), headingTag
+  const t = card;
+  const noun = t.kind === 'cottage' ? 'Cottages' : 'Standard rooms';
+  const prefParam = t.kind === 'cottage' ? 'cottage' : 'standard';
+  const waText = 'Hello ' + s.site_name + ', I\u2019d like to enquire about staying in your ' + t.name.toLowerCase() + '. Please let me know whether this is available and confirm the applicable rate.';
+  const H = locals.headingTag || 'h3';
+%>
+<article class="feature<%= locals.reverse ? ' reverse' : '' %>">
+  <div class="feature-media">
+    <div class="frame<%= locals.reverse ? ' left' : '' %>"><div class="frame-inner ratio-43">
+      <% if (t.photo) { %><%- img(t.photo, t.photo_alt) %><% } else { %><div class="ph<%= t.kind === 'cottage' ? '' : ' teak' %>" aria-hidden="true"><img src="/img/logo-emblem-gold.png" alt="" width="256" height="253"></div><% } %>
+    </div></div>
+  </div>
+  <div class="feature-body">
+    <div class="feature-count"><strong><%= t.total_units %></strong><span><%= noun %> in total</span></div>
+    <<%= H %>><% if (!locals.detail) { %><a href="/stay/<%= t.slug %>"><%= t.name %></a><% } else { %><%= t.name %><% } %></<%= H %>>
+    <% if (t.summary) { %><p class="lead"><%= t.summary %></p><% } %>
+    <% if (locals.detail && t.description) { %><%- renderText(t.description) %><% } %>
+    <% if (t.capacity || t.bed_info || t.rate_info || t.price_per_night) { %>
+    <dl class="facts">
+      <% if (t.price_per_night) { %><dt>Price</dt><dd><strong><%= rupees(t.price_per_night * 100) %></strong> a night<%= Number(s.gst_percent) ? ' + ' + s.gst_percent + '% GST' : '' %></dd><% } %>
+      <% if (t.max_adults) { %><dt>Guests</dt><dd>Up to <%= t.max_adults %> adult<%= t.max_adults === 1 ? '' : 's' %><%= t.max_children ? ' and ' + t.max_children + ' child' + (t.max_children === 1 ? '' : 'ren') : '' %></dd><% } %>
+      <% if (t.capacity) { %><dt>Capacity</dt><dd><%= t.capacity %></dd><% } %>
+      <% if (t.bed_info) { %><dt>Beds</dt><dd><%= t.bed_info %></dd><% } %>
+      <% if (t.rate_info) { %><dt>Rates</dt><dd><%= t.rate_info %></dd><% } %>
+    </dl>
+    <% } %>
+    <% if (t.amenityList && t.amenityList.length) { %>
+      <ul class="tick-list"><% t.amenityList.forEach(function (a) { %><li><%= a %></li><% }) %></ul>
+    <% } %>
+    <% if (t.seasonal_notes) { %><p class="small"><%= t.seasonal_notes %></p><% } %>
+    <p class="avail-note">This is the total number at the Centre. Pick your dates on the booking page to see what is free.</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/book?room=<%= prefParam %>">Book now<span class="sr-only"> : <%= t.name %></span></a>
+      <a class="btn btn-whatsapp" href="<%= waLink(waText) %>" target="_blank" rel="noopener" data-track="WhatsApp Click">WhatsApp<span class="sr-only"> about <%= t.name %></span></a>
+      <% if (!locals.detail) { %><a class="btn-link" href="/stay/<%= t.slug %>">View details<span class="sr-only"> of <%= t.name %></span></a><% } %>
+    </div>
+  </div>
+</article>

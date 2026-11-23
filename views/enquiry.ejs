@@ -1,0 +1,22 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main">
+  <%- include('partials/page-hero', {
+    heroEyebrow: 'Enquire',
+    heroTitle: mode === 'treatment' ? 'Treatment <em>enquiry</em>' : 'Booking <em>enquiry</em>',
+    heroLead: 'Fill in the form and WhatsApp opens with your message ready to send.',
+    heroExtra: '<p class="tabs" role="navigation" aria-label="Enquiry type"><a class="tab" href="/enquiry"' + (mode === 'stay' ? ' aria-current="page"' : '') + '>Stay enquiry</a><a class="tab" href="/enquiry?type=treatment"' + (mode === 'treatment' ? ' aria-current="page"' : '') + '>Treatment enquiry</a></p>'
+  }) %>
+  <section class="section bg-parchment">
+    <div class="container narrow">
+      <div class="note">
+        <p><strong>This is an enquiry, not a confirmed booking.</strong> The Centre must confirm <%= mode === 'stay' ? 'availability and the applicable rate' : 'suitability, availability and the applicable rate' %>. Nothing is reserved until the Centre tells you so.</p>
+      </div>
+      <div class="form-card mt">
+        <%- include('partials/enquiry-form', { formId: 'main-form', formMode: mode, formPref: pref, formTreatment: prefTreatment }) %>
+      </div>
+      <p class="small center mt">You can also call <% phones.forEach(function (p, i) { %><a href="<%= tel(p) %>"><%= p %></a><%= i < phones.length - 1 ? ' or ' : '' %><% }) %>.</p>
+    </div>
+  </section>
+</main>
+<%- include('partials/footer') %>

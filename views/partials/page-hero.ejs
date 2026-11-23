@@ -1,0 +1,23 @@
+<%
+  // Params: heroTitle, heroLead (optional), heroEyebrow (optional), heroImage (optional), heroAlt (optional)
+  const himg = locals.heroImage || '';
+%>
+<section class="page-hero<%= himg ? ' has-image' : '' %>">
+  <% if (himg) { %><figure class="page-hero-media"><%- img(himg, locals.heroAlt || '', { eager: true }) %></figure><% } %>
+  <div class="container page-hero-content">
+    <% if (seo.breadcrumbs && seo.breadcrumbs.length) { %>
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <ol>
+        <% seo.breadcrumbs.forEach(function (b, i) { const last = i === seo.breadcrumbs.length - 1; %>
+          <li><% if (last) { %><span aria-current="page"><%= b.name %></span><% } else { %><a href="<%= b.path %>"><%= b.name %></a><% } %></li>
+        <% }) %>
+      </ol>
+    </nav>
+    <% } %>
+    <% if (locals.heroEyebrow) { %><p class="eyebrow"><%= heroEyebrow %></p><% } %>
+    <h1><%- heroTitle %></h1>
+    <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+    <% if (locals.heroLead) { %><p class="lead"><%= heroLead %></p><% } %>
+    <% if (locals.heroExtra) { %><%- heroExtra %><% } %>
+  </div>
+</section>

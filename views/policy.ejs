@@ -1,0 +1,12 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main">
+  <%- include('partials/page-hero', { heroEyebrow: 'Information', heroTitle: esc(heading) }) %>
+  <section class="section">
+    <div class="container narrow prose policy">
+      <%- body %>
+      <div class="btn-row"><a class="btn btn-outline" href="/contact">Contact the Centre</a></div>
+    </div>
+  </section>
+</main>
+<%- include('partials/footer') %>

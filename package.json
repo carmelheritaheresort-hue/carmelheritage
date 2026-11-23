@@ -1,0 +1,30 @@
+{
+  "name": "carmel-ayurveda-village",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Website, enquiry flow and admin area for Carmel Ayurveda Village",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "migrate": "node scripts/migrate.js",
+    "create-admin": "node scripts/create-admin.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.5",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "multer": "^2.0.2",
+    "nodemailer": "^6.9.16"
+  },
+  "optionalDependencies": {
+    "sharp": "^0.33.5"
+  }
+}

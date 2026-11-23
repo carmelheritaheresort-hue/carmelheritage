@@ -1,0 +1,42 @@
+<%- include('_top', { title: 'Enquiries' }) %>
+<h1>Enquiries</h1>
+<form method="get" action="/admin/enquiries" class="filters">
+  <div class="field"><label for="q">Search</label><input id="q" name="q" value="<%= q.q || '' %>" placeholder="Name, phone, email, message"></div>
+  <div class="field"><label for="status">Status</label>
+    <select id="status" name="status"><option value="">Any</option><% STATUSES.forEach(function (s) { %><option value="<%= s %>"<%= q.status === s ? ' selected' : '' %>><%= s %></option><% }) %></select></div>
+  <div class="field"><label for="type">Type</label>
+    <select id="type" name="type"><option value="">Any</option><option value="stay"<%= q.type === 'stay' ? ' selected' : '' %>>Stay</option><option value="treatment"<%= q.type === 'treatment' ? ' selected' : '' %>>Treatment</option></select></div>
+  <div class="field"><label for="pref">Accommodation</label>
+    <select id="pref" name="pref"><option value="">Any</option><% PREFS.forEach(function (p) { %><option value="<%= p %>"<%= q.pref === p ? ' selected' : '' %>><%= p %></option><% }) %></select></div>
+  <div class="field"><label for="from">Received from</label><input id="from" type="date" name="from" value="<%= q.from || '' %>"></div>
+  <div class="field"><label for="to">Received to</label><input id="to" type="date" name="to" value="<%= q.to || '' %>"></div>
+  <div class="field"><label for="ci_from">Check-in from</label><input id="ci_from" type="date" name="ci_from" value="<%= q.ci_from || '' %>"></div>
+  <div class="field"><label for="ci_to">Check-in to</label><input id="ci_to" type="date" name="ci_to" value="<%= q.ci_to || '' %>"></div>
+  <div class="field"><button class="btn" type="submit">Filter</button> <a href="/admin/enquiries">Reset</a></div>
+</form>
+<p><%= total %> found. <a href="/admin/enquiries/export.csv<%= qs ? '?' + qs : '' %>">Export these as CSV</a></p>
+<table>
+  <thead><tr><th scope="col">#</th><th scope="col">Received</th><th scope="col">Type</th><th scope="col">Name</th><th scope="col">Phone</th><th scope="col">Dates</th><th scope="col">Preference</th><th scope="col">Status</th></tr></thead>
+  <tbody>
+    <% rows.forEach(function (e) { %>
+      <tr>
+        <td><a href="/admin/enquiries/<%= e.id %>"><%= e.id %></a></td>
+        <td><%= fmtDateTime(e.created_at) %></td>
+        <td><%= e.type %></td>
+        <td><a href="/admin/enquiries/<%= e.id %>"><%= e.name %></a></td>
+        <td><%= e.phone %></td>
+        <td><%= e.check_in %><%= e.check_out ? ' to ' + e.check_out : '' %></td>
+        <td><%= e.accommodation_pref %><%= e.units ? ' x' + e.units : '' %></td>
+        <td><span class="badge s-<%= e.status %>"><%= e.status %></span></td>
+      </tr>
+    <% }) %>
+    <% if (!rows.length) { %><tr><td colspan="8">No enquiries match.</td></tr><% } %>
+  </tbody>
+</table>
+<% if (pages > 1) { %>
+<p class="pager">Page <%= page %> of <%= pages %>
+  <% if (page > 1) { %><a href="/admin/enquiries?<%= qs %>&amp;page=<%= page - 1 %>">Previous</a><% } %>
+  <% if (page < pages) { %><a href="/admin/enquiries?<%= qs %>&amp;page=<%= page + 1 %>">Next</a><% } %>
+</p>
+<% } %>
+<%- include('_bottom') %>

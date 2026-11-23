@@ -1,0 +1,195 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main">
+
+  <section class="hero" aria-labelledby="hero-h">
+    <%- include('partials/hero-art') %>
+    <div class="container hero-content">
+      <p class="eyebrow"><%= s.hero_eyebrow %></p>
+      <h1 id="hero-h"><%= s.hero_headline %></h1>
+      <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+      <p class="lead"><%= s.hero_text %></p>
+      <div class="btn-row">
+        <a class="btn btn-gold btn-lg" href="/book">Book Your Stay</a>
+        <a class="btn btn-outline-light btn-lg" href="/treatments">Explore Treatments</a>
+      </div>
+    </div>
+    <span class="scroll-cue" aria-hidden="true"></span>
+  </section>
+
+  <section class="section-tight" id="stay-enquiry" aria-labelledby="enq-h">
+    <div class="container enquiry-shell">
+      <div class="enquiry-card">
+        <div class="enquiry-aside bg-forest on-dark">
+          <p class="eyebrow">Book your stay</p>
+          <h2 id="enq-h">Check <em>availability</em></h2>
+          <p>Choose your dates and guests to see which rooms are free, then book and pay securely online.</p>
+          <ul class="plain">
+            <li><%= fc.inv.cottage %> cottages and <%= fc.inv.standard_room %> standard rooms</li>
+            <li>Pay by UPI, card or netbanking</li>
+            <% phones.forEach(function (p) { %><li>Or call <a href="<%= tel(p) %>" data-track="Call Click"><%= p %></a></li><% }) %>
+          </ul>
+        </div>
+        <div class="enquiry-main">
+          <form class="quick-book" method="get" action="/book">
+            <div class="field">
+              <label for="qb-in">Check-in</label>
+              <input id="qb-in" name="check_in" type="date" min="<%= fc.today %>" required>
+            </div>
+            <div class="field">
+              <label for="qb-out">Check-out</label>
+              <input id="qb-out" name="check_out" type="date" min="<%= fc.today %>" required>
+            </div>
+            <div class="field">
+              <label for="qb-ad">Adults</label>
+              <input id="qb-ad" name="adults" type="number" inputmode="numeric" min="1" max="60" value="2">
+            </div>
+            <div class="field">
+              <label for="qb-ch">Children</label>
+              <input id="qb-ch" name="children" type="number" inputmode="numeric" min="0" max="60" value="0">
+            </div>
+            <div class="qb-submit">
+              <p class="small"><% if (isFinite(fromPrice)) { %>Rooms from <%= rupees(fromPrice * 100) %> a night plus GST.<% } %></p>
+              <button class="btn btn-primary btn-lg" type="submit">Check availability</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="intro-h">
+    <div class="container split">
+      <div class="intro-media">
+        <div class="frame"><div class="frame-inner ratio-45">
+          <% if (s.intro_image) { %><%- img(s.intro_image, s.intro_image_alt) %><% } else { %><div class="ph" aria-hidden="true"><img src="/img/logo-emblem-gold.png" alt="" width="256" height="253"></div><% } %>
+        </div>
+        <div class="seal" aria-hidden="true"><div><small>Since</small><strong>1983</strong></div></div>
+        </div>
+      </div>
+      <div>
+        <p class="eyebrow">Our heritage</p>
+        <h2 id="intro-h">A sanctuary for <em>integrated living</em></h2>
+        <img class="ornament left" src="/img/ornament.svg" alt="" width="200" height="20">
+        <p class="lead dropcap"><%= s.intro_text %></p>
+        <p>The Centre grew from the social commitment of Nirmalgram Welfare Centre, established under the Carmel Province of the CMI Congregation.</p>
+        <div class="btn-row"><a class="btn btn-outline" href="/about">Read the Centre's story</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight bg-forest on-dark kasavu kasavu-bottom" aria-label="The Centre in brief">
+    <div class="container facts-strip">
+      <div><strong>1983</strong><span>Year the Centre was initiated</span></div>
+      <div><strong><%= fc.inv.cottage %></strong><span>Cottages</span></div>
+      <div><strong><%= fc.inv.standard_room %></strong><span>Standard rooms</span></div>
+      <div><strong>Ayurveda</strong><span>Classical medicines and therapies</span></div>
+    </div>
+  </section>
+
+  <section class="section bg-parchment" aria-labelledby="acc-h">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Stay</p>
+        <h2 id="acc-h">Cottages and <em>standard rooms</em></h2>
+        <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+        <p class="lead">The Centre has <%= fc.inv.cottage %> cottages and <%= fc.inv.standard_room %> standard rooms in total. These are the totals, not what is free on a given date; the Centre confirms availability for your dates.</p>
+      </div>
+      <% types.forEach(function (t, i) { %><%- include('partials/acc-card', { card: t, reverse: i % 2 === 1 }) %><% }) %>
+      <% if (s.check_in_time || s.check_out_time) { %>
+        <p class="small center"><% if (s.check_in_time) { %>Check-in: <%= s.check_in_time %>. <% } %><% if (s.check_out_time) { %>Check-out: <%= s.check_out_time %>.<% } %></p>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="section bg-teak on-dark" aria-labelledby="trt-h">
+    <div class="container split wide-text">
+      <div>
+        <p class="eyebrow">Ayurveda</p>
+        <h2 id="trt-h">Classical Ayurveda, <em>practised and shared</em></h2>
+        <img class="ornament left" src="/img/ornament.svg" alt="" width="200" height="20">
+        <p class="lead"><%= s.treatments_intro %></p>
+        <% if (treatments.length) { %>
+          <ul class="t-list">
+            <% treatments.forEach(function (t) { %>
+              <li><span class="t-name"><%= t.name %></span><% if (t.duration) { %><span class="t-meta"><%= t.duration %></span><% } %></li>
+            <% }) %>
+          </ul>
+        <% } %>
+        <div class="btn-row">
+          <a class="btn btn-gold" href="/treatments">Explore treatments</a>
+          <a class="btn btn-outline" href="/enquiry?type=treatment">Treatment enquiry</a>
+        </div>
+      </div>
+      <div class="frame left"><div class="frame-inner ratio-45">
+        <% if (s.ayurveda_image) { %><%- img(s.ayurveda_image, s.ayurveda_image_alt) %><% } else { %><div class="ph teak" aria-hidden="true"><img src="/img/logo-emblem-gold.png" alt="" width="256" height="253"></div><% } %>
+      </div></div>
+    </div>
+  </section>
+
+  <% if (facilities.length) { %>
+  <section class="section" aria-labelledby="fac-h">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">At the Centre</p>
+        <h2 id="fac-h">Facilities and <em>experiences</em></h2>
+        <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+      </div>
+      <ul class="tiles">
+        <% facilities.forEach(function (f) { %>
+          <li class="tile">
+            <h3><%= f.name %></h3>
+            <% if (f.description) { %><p><%= f.description %></p><% } %>
+            <% if (f.availability) { %><p class="small"><%= f.availability %></p><% } %>
+          </li>
+        <% }) %>
+      </ul>
+      <div class="btn-row center"><a class="btn btn-outline" href="/facilities">All facilities</a></div>
+    </div>
+  </section>
+  <% } %>
+
+  <% if (gallery.length) { %>
+  <section class="section<%= facilities.length ? ' bg-parchment' : '' %>" aria-labelledby="gal-h">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Gallery</p>
+        <h2 id="gal-h">Glimpses of the <em>village</em></h2>
+        <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+      </div>
+      <ul class="gallery-grid<%= gallery.length < 5 ? ' few' : '' %>">
+        <% gallery.forEach(function (g) { %>
+          <li><figure>
+            <%- img(g.image, g.alt) %>
+            <% if (g.caption || g.is_illustration) { %><figcaption><%= g.caption %><% if (g.is_illustration) { %> <em>(Illustration)</em><% } %></figcaption><% } %>
+          </figure></li>
+        <% }) %>
+      </ul>
+      <div class="btn-row center"><a class="btn btn-outline" href="/gallery">View the gallery</a></div>
+    </div>
+  </section>
+  <% } %>
+
+  <% if (testimonials.length) { %>
+  <section class="section bg-parchment" aria-labelledby="tst-h">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Guests</p>
+        <h2 id="tst-h">Words from <em>our guests</em></h2>
+        <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+      </div>
+      <div class="quotes">
+        <% testimonials.forEach(function (t) { %>
+          <figure class="quote"><blockquote><p><%= t.quote %></p></blockquote>
+            <figcaption><%= t.name %><% if (t.location) { %>, <%= t.location %><% } %></figcaption></figure>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <%- include('partials/location') %>
+  <%- include('partials/faq-list') %>
+  <%- include('partials/cta') %>
+</main>
+<%- include('partials/footer') %>

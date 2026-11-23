@@ -1,0 +1,170 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<%
+  const kinds = [['cottage', 'cottage_units', 'cottage'], ['standard_room', 'standard_units', 'standard']];
+  const roomData = {};
+  Object.keys(rooms).forEach(function (k) { const r = rooms[k]; roomData[k] = { rate: r.rate, maxAdults: r.maxAdults, maxChildren: r.maxChildren, total: r.total, name: r.name }; });
+  const gstLabel = pricing.gstPercent ? ' + ' + pricing.gstPercent + '% GST' : '';
+%>
+<main id="main">
+  <%- include('partials/page-hero', {
+    heroEyebrow: 'Reservations',
+    heroTitle: 'Book your <em>stay</em>',
+    heroLead: 'Choose your dates, rooms and guests, then pay securely online.',
+    heroImage: s.stay_image, heroAlt: s.stay_image_alt
+  }) %>
+
+  <section class="section bg-parchment">
+    <div class="container">
+    <% if (!open) { %>
+      <div class="narrow form-card center">
+        <h2 class="h3">Online booking is not open yet</h2>
+        <p>Please send us your dates and the Centre will reply with availability and the rate.</p>
+        <div class="btn-row center">
+          <a class="btn btn-primary" href="/enquiry">Send a booking enquiry</a>
+          <a class="btn btn-whatsapp" href="<%= waLink('Hello ' + s.site_name + ', I\u2019d like to book a stay.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">WhatsApp</a>
+        </div>
+      </div>
+    <% } else { %>
+      <% if (testMode) { %>
+      <p class="test-banner" role="note"><strong>Test mode.</strong> <%= provider === 'dev' ? 'No payment gateway is connected. The pay button simulates a payment and no money is taken.' : 'Razorpay test keys are in use. Use Razorpay test cards or UPI; no real money is taken.' %></p>
+      <% } %>
+      <form class="book" id="book-form" data-book-form novalidate
+            data-provider="<%= provider %>" data-today="<%= today %>"
+            data-rooms="<%= JSON.stringify(roomData) %>" data-pricing="<%= JSON.stringify(pricing) %>"
+            data-site="<%= s.site_name %>">
+        <div class="hp" aria-hidden="true"><label>Leave this field empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+        <div class="book-main">
+          <div class="form-errors" role="alert" tabindex="-1" hidden></div>
+
+          <fieldset class="book-step">
+            <legend><span class="step-no">1</span> Dates and guests</legend>
+            <div class="form-grid">
+              <div class="field quarter">
+                <label for="b-check_in">Check-in</label>
+                <input id="b-check_in" name="check_in" type="date" required min="<%= today %>" value="<%= pre.check_in %>" aria-describedby="b-check_in-err">
+                <p class="err" id="b-check_in-err" data-err-for="check_in" hidden></p>
+              </div>
+              <div class="field quarter">
+                <label for="b-check_out">Check-out</label>
+                <input id="b-check_out" name="check_out" type="date" required min="<%= today %>" value="<%= pre.check_out %>" aria-describedby="b-check_out-err">
+                <p class="err" id="b-check_out-err" data-err-for="check_out" hidden></p>
+              </div>
+              <div class="field quarter">
+                <label for="b-adults">Adults</label>
+                <input id="b-adults" name="adults" type="number" inputmode="numeric" min="1" max="60" value="<%= pre.adults %>" required aria-describedby="b-adults-err">
+                <p class="err" id="b-adults-err" data-err-for="adults" hidden></p>
+              </div>
+              <div class="field quarter">
+                <label for="b-children">Children</label>
+                <input id="b-children" name="children" type="number" inputmode="numeric" min="0" max="60" value="<%= pre.children %>" aria-describedby="b-children-err">
+                <p class="err" id="b-children-err" data-err-for="children" hidden></p>
+              </div>
+            </div>
+            <p class="avail-status" data-avail-status role="status" aria-live="polite">Choose your dates to see which rooms are free.</p>
+          </fieldset>
+
+          <fieldset class="book-step">
+            <legend><span class="step-no">2</span> Choose your rooms</legend>
+            <div class="room-picks">
+            <% kinds.forEach(function (k) { const r = rooms[k[0]]; if (!r) return; %>
+              <div class="room-pick" data-room="<%= k[0] %>"<%- pre.room === k[2] ? ' data-preselect' : '' %>>
+                <div class="room-pick-media">
+                  <% if (r.photo) { %><%- img(r.photo, r.photo_alt) %><% } else { %><div class="ph" aria-hidden="true"><img src="/img/logo-emblem-gold.png" alt="" width="120" height="119"></div><% } %>
+                </div>
+                <div class="room-pick-body">
+                  <h3 id="rp-<%= k[0] %>"><%= r.name %></h3>
+                  <p class="room-price"><strong><%= rupees(r.rate * 100) %></strong> <span>per <%= k[0] === 'cottage' ? 'cottage' : 'room' %> per night<%= gstLabel %></span></p>
+                  <p class="small">Up to <%= r.maxAdults %> adult<%= r.maxAdults === 1 ? '' : 's' %><% if (r.maxChildren) { %> and <%= r.maxChildren %> child<%= r.maxChildren === 1 ? '' : 'ren' %><% } %> each.</p>
+                  <p class="room-avail" data-avail-for="<%= k[0] %>"><%= r.total %> in total</p>
+                  <div class="stepper" role="group" aria-labelledby="rp-<%= k[0] %>">
+                    <button type="button" class="step-btn" data-step="-1" aria-label="One fewer <%= r.name.toLowerCase() %>">&minus;</button>
+                    <label class="sr-only" for="b-<%= k[1] %>">Number of <%= r.name.toLowerCase() %></label>
+                    <input id="b-<%= k[1] %>" name="<%= k[1] %>" type="number" inputmode="numeric" min="0" max="<%= r.total %>" value="0" aria-describedby="b-<%= k[1] %>-err">
+                    <button type="button" class="step-btn" data-step="1" aria-label="One more <%= r.name.toLowerCase() %>">+</button>
+                  </div>
+                  <p class="err" id="b-<%= k[1] %>-err" data-err-for="<%= k[1] %>" hidden></p>
+                  <a class="btn-link small-link" href="/stay/<%= r.slug %>" target="_blank" rel="noopener">Room details<span class="sr-only"> for <%= r.name %> (opens in a new tab)</span></a>
+                </div>
+              </div>
+            <% }) %>
+            </div>
+          </fieldset>
+
+          <fieldset class="book-step">
+            <legend><span class="step-no">3</span> Your details</legend>
+            <div class="form-grid">
+              <div class="field">
+                <label for="b-name">Full name</label>
+                <input id="b-name" name="name" type="text" autocomplete="name" required maxlength="100" aria-describedby="b-name-err">
+                <p class="err" id="b-name-err" data-err-for="name" hidden></p>
+              </div>
+              <div class="field">
+                <label for="b-phone">Mobile number</label>
+                <input id="b-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required maxlength="30" placeholder="+91 ..." aria-describedby="b-phone-hint b-phone-err">
+                <p class="hint" id="b-phone-hint">Include the country code, for example +91.</p>
+                <p class="err" id="b-phone-err" data-err-for="phone" hidden></p>
+              </div>
+              <div class="field full">
+                <label for="b-email">Email</label>
+                <input id="b-email" name="email" type="email" autocomplete="email" required maxlength="254" aria-describedby="b-email-hint b-email-err">
+                <p class="hint" id="b-email-hint">Your booking details and receipt are sent here.</p>
+                <p class="err" id="b-email-err" data-err-for="email" hidden></p>
+              </div>
+              <div class="field full">
+                <label for="b-message">Requests or questions <span class="opt">(optional)</span></label>
+                <textarea id="b-message" name="message" rows="3" maxlength="1000" placeholder="Arrival time, treatment interest, dietary needs..."></textarea>
+              </div>
+              <div class="field full">
+                <label class="check-label"><input type="checkbox" name="accept" value="1" id="b-accept" aria-describedby="b-accept-err"> <span>I have read the <a href="/booking-cancellation-policy" target="_blank" rel="noopener">Booking and Cancellation Policy</a> and the <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
+                <p class="err" id="b-accept-err" data-err-for="accept" hidden></p>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <aside class="book-summary" aria-labelledby="sum-h">
+          <div class="summary-card">
+            <h2 id="sum-h" class="h3">Your booking</h2>
+            <div data-summary aria-live="polite">
+              <p class="small" data-summary-empty>Choose dates and at least one room to see the price.</p>
+              <div data-summary-body hidden>
+                <p class="sum-dates" data-sum-dates></p>
+                <table class="sum-table">
+                  <tbody data-sum-lines></tbody>
+                  <tfoot>
+                    <tr><th scope="row">Room total</th><td data-sum-subtotal></td></tr>
+                    <tr><th scope="row" data-sum-gst-label>GST</th><td data-sum-gst></td></tr>
+                    <tr class="sum-total"><th scope="row">Total</th><td data-sum-total></td></tr>
+                  </tfoot>
+                </table>
+                <div class="sum-paynow">
+                  <span data-sum-paynow-label>Pay now</span>
+                  <strong data-sum-paynow></strong>
+                </div>
+                <p class="small" data-sum-balance hidden></p>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-lg btn-block" type="submit" data-pay>Continue to payment</button>
+            <% if (provider === 'razorpay') { %><p class="small center pay-secure">Secure payment by Razorpay: UPI, cards and netbanking.</p><% } %>
+            <ul class="plain sum-notes small">
+              <li>Rooms are held for <%= holdMinutes %> minutes while you pay.</li>
+              <li>After payment the Centre checks your rooms and confirms<%= replyHours ? ' within ' + replyHours + ' hours' : '' %>.</li>
+              <li>If the rooms cannot be provided, your payment is refunded in full.</li>
+            </ul>
+            <p class="small center">Prefer to talk? <a href="<%= waLink('Hello ' + s.site_name + ', I\u2019d like to book a stay.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">WhatsApp</a> or call <a href="<%= tel(phones[0] || '') %>"><%= phones[0] %></a>.</p>
+          </div>
+        </aside>
+      </form>
+      <noscript><p class="note">Online booking needs JavaScript. Please call <a href="<%= tel(phones[0] || '') %>"><%= phones[0] %></a> or send a <a href="/enquiry">booking enquiry</a>.</p></noscript>
+    <% } %>
+    </div>
+  </section>
+</main>
+<% if (open) { %>
+<% if (provider === 'razorpay') { %><script src="https://checkout.razorpay.com/v1/checkout.js" defer></script><% } %>
+<script src="/js/booking-calc.js" defer></script>
+<script src="/js/book.js" defer></script>
+<% } %>
+<%- include('partials/footer') %>

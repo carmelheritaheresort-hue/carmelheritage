@@ -1,0 +1,46 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main">
+  <%- include('partials/page-hero', { heroEyebrow: 'About ' + s.site_name, heroTitle: 'A sanctuary for <em>integrated living</em>', heroLead: 'Rooted in the traditions and principles of Ayurveda, and initiated in 1983.', heroImage: s.about_image, heroAlt: s.about_image_alt }) %>
+  <section class="section">
+    <div class="container about-grid">
+      <div class="prose">
+        <%- renderText(s.about_body) %>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="/treatments">Explore treatments</a>
+          <a class="btn btn-whatsapp" href="<%= waLink('Hello ' + s.site_name + ', I\u2019d like to make an enquiry.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">Enquire on WhatsApp</a>
+        </div>
+      </div>
+      <aside class="glance on-dark" aria-labelledby="glance-h">
+        <h2 id="glance-h">At a glance</h2>
+        <dl>
+          <dt>Organisation</dt><dd><%= s.org_name %></dd>
+          <dt>Initiated</dt><dd>1983</dd>
+          <dt>Grew from</dt><dd>Nirmalgram Welfare Centre</dd>
+          <dt>Established under</dt><dd>Carmel Province of the CMI Congregation</dd>
+          <dt>Accommodation</dt><dd>8 cottages and 7 standard rooms</dd>
+          <dt>Location</dt><dd>Bhoothathankettu, Kothamangalam, Kerala</dd>
+        </dl>
+      </aside>
+    </div>
+  </section>
+  <% if (testimonials.length) { %>
+  <section class="section bg-parchment" aria-labelledby="tst-h">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Guests</p>
+        <h2 id="tst-h">Words from <em>our guests</em></h2>
+        <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+      </div>
+      <div class="quotes">
+        <% testimonials.forEach(function (t) { %>
+          <figure class="quote"><blockquote><p><%= t.quote %></p></blockquote>
+            <figcaption><%= t.name %><% if (t.location) { %>, <%= t.location %><% } %></figcaption></figure>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+  <%- include('partials/cta') %>
+</main>
+<%- include('partials/footer') %>

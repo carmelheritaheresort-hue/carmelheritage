@@ -1,0 +1,10 @@
+<%- include('_top', { title: 'Add guest' }) %>
+<p><a href="/admin/guests">&larr; Guests</a></p>
+<h1>Add a guest</h1>
+<p class="note">Use this for guests who booked by phone or walked in. Online bookings and enquiries create profiles on their own. If the mobile number or email already belongs to a guest, future bookings join the oldest profile.</p>
+<form method="post" action="/admin/guests/new" class="stack">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <%- include('_guest-fields', { f: f, errors: errors }) %>
+  <button class="btn" type="submit">Save guest</button>
+</form>
+<%- include('_bottom') %>

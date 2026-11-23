@@ -1,0 +1,15 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main">
+  <%- include('partials/page-hero', { heroEyebrow: String(code), heroTitle: esc(heading), heroLead: text }) %>
+  <section class="section">
+    <div class="container narrow center">
+      <div class="btn-row center">
+        <a class="btn btn-primary" href="/">Go to the home page</a>
+        <a class="btn btn-whatsapp" href="<%= waLink() %>" target="_blank" rel="noopener" data-track="WhatsApp Click">WhatsApp</a>
+        <% if (phones[0]) { %><a class="btn btn-outline" href="<%= tel(phones[0]) %>">Call <%= phones[0] %></a><% } %>
+      </div>
+    </div>
+  </section>
+</main>
+<%- include('partials/footer') %>

@@ -1,0 +1,34 @@
+<%- include('_top', { title: 'Bookings' }) %>
+<h1>Bookings</h1>
+<p><a href="/admin/bookings/blocks">Block rooms for offline bookings or maintenance</a></p>
+<form method="get" action="/admin/bookings" class="filters">
+  <div class="field"><label for="q">Search</label><input id="q" name="q" value="<%= q.q || '' %>" placeholder="Reference, name, phone, email"></div>
+  <div class="field"><label for="status">Status</label>
+    <select id="status" name="status">
+      <option value="">Active (hide expired and failed)</option>
+      <option value="all"<%= q.status === 'all' ? ' selected' : '' %>>All</option>
+      <% BSTATUSES.forEach(function (s) { %><option value="<%= s %>"<%= q.status === s ? ' selected' : '' %>><%= LABEL[s] %></option><% }) %>
+    </select></div>
+  <div class="field"><label for="ci_from">Check-in from</label><input id="ci_from" type="date" name="ci_from" value="<%= q.ci_from || '' %>"></div>
+  <div class="field"><label for="ci_to">Check-in to</label><input id="ci_to" type="date" name="ci_to" value="<%= q.ci_to || '' %>"></div>
+  <div class="field"><button class="btn" type="submit">Filter</button> <a href="/admin/bookings">Reset</a></div>
+</form>
+<p><%= rows.length %> shown<%= rows.length === 200 ? ' (latest 200)' : '' %>. <a href="/admin/bookings/export.csv<%= qs ? '?' + qs : '' %>">Export as CSV</a></p>
+<table>
+  <thead><tr><th scope="col">Reference</th><th scope="col">Booked</th><th scope="col">Guest</th><th scope="col">Stay</th><th scope="col">Rooms</th><th scope="col">Paid / total</th><th scope="col">Status</th></tr></thead>
+  <tbody>
+    <% rows.forEach(function (b) { %>
+      <tr>
+        <td><a href="/admin/bookings/<%= b.id %>"><%= b.ref %></a></td>
+        <td><%= fmtDateTime(b.created_at) %></td>
+        <td><a href="/admin/bookings/<%= b.id %>"><%= b.name %></a><br><small><%= b.phone %></small></td>
+        <td><%= b.check_in %> to <%= b.check_out %><br><small><%= b.nights %> night<%= b.nights === 1 ? '' : 's' %>, <%= b.adults %>A <%= b.children %>C</small></td>
+        <td><%= [b.cottage_units ? b.cottage_units + ' cottage' : '', b.standard_units ? b.standard_units + ' standard' : ''].filter(Boolean).join(', ') %></td>
+        <td><%= ['paid','confirmed','refunded'].includes(b.status) ? rupees(b.pay_now_paise) : '-' %> / <%= rupees(b.total_paise) %></td>
+        <td><span class="badge b-<%= b.status %>"><%= LABEL[b.status] %></span></td>
+      </tr>
+    <% }) %>
+    <% if (!rows.length) { %><tr><td colspan="7">No bookings match.</td></tr><% } %>
+  </tbody>
+</table>
+<%- include('_bottom') %>

@@ -1,0 +1,31 @@
+<%- include('_top', { title: 'Block rooms' }) %>
+<p><a href="/admin/bookings">&larr; Bookings</a></p>
+<h1>Block rooms</h1>
+<p class="note">Online availability counts paid and confirmed website bookings. Add a block here for every booking taken by phone, WhatsApp or walk-in, and for rooms closed for maintenance, so the website does not sell the same room twice.</p>
+<% if (ok) { %><p class="ok" role="status">Block added.</p><% } %>
+<% if (error) { %><div class="error" role="alert"><p><%= error %></p></div><% } %>
+<form method="post" action="/admin/bookings/blocks" class="filters">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="field"><label for="kind">Room type</label>
+    <select id="kind" name="kind"><option value="cottage"<%= form.kind === 'cottage' ? ' selected' : '' %>>Cottage</option><option value="standard_room"<%= form.kind === 'standard_room' ? ' selected' : '' %>>Standard room</option></select></div>
+  <div class="field"><label for="units">Number of units</label><input id="units" name="units" type="number" min="1" value="<%= form.units || 1 %>"></div>
+  <div class="field"><label for="start_date">First night</label><input id="start_date" name="start_date" type="date" value="<%= form.start_date || '' %>" required></div>
+  <div class="field"><label for="last_night">Last night</label><input id="last_night" name="last_night" type="date" value="<%= form.last_night || '' %>" required></div>
+  <div class="field"><label for="note">Note</label><input id="note" name="note" value="<%= form.note || '' %>" placeholder="e.g. Phone booking, Mr Nair"></div>
+  <div class="field"><button class="btn" type="submit">Add block</button></div>
+</form>
+<h2>Current and future blocks</h2>
+<table>
+  <thead><tr><th scope="col">Room type</th><th scope="col">Units</th><th scope="col">First night</th><th scope="col">Last night</th><th scope="col">Note</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+  <tbody>
+  <% blocks.forEach(function (k) { const last = new Date(Date.parse(k.end_date + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10); %>
+    <tr>
+      <td><%= k.kind === 'cottage' ? 'Cottage' : 'Standard room' %></td><td><%= k.units %></td><td><%= k.start_date %></td><td><%= last %></td><td><%= k.note %></td>
+      <td><form method="post" action="/admin/bookings/blocks/<%= k.id %>/delete" class="inline-form"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn-link" type="submit" data-confirm="Remove this block?">Remove</button></form></td>
+    </tr>
+  <% }) %>
+  <% if (!blocks.length) { %><tr><td colspan="6">No blocks.</td></tr><% } %>
+  </tbody>
+</table>
+<script src="/js/admin.js" defer></script>
+<%- include('_bottom') %>

@@ -1,0 +1,12 @@
+<section class="section cta bg-forest on-dark kasavu kasavu-bottom" aria-labelledby="cta-h">
+  <div class="container narrow">
+    <p class="eyebrow">Plan your visit</p>
+    <h2 id="cta-h"><%- locals.ctaTitle || 'Begin your stay with a simple <em>enquiry</em>' %></h2>
+    <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+    <p class="lead">Message the Centre on WhatsApp or call. The Centre will reply to confirm availability and the applicable rate.</p>
+    <div class="btn-row center">
+      <a class="btn btn-whatsapp btn-lg" href="<%= waLink('Hello ' + s.site_name + ', I\u2019d like to make an enquiry.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">Enquire on WhatsApp</a>
+      <% phones.forEach(function (p) { %><a class="btn btn-outline btn-lg" href="<%= tel(p) %>" data-track="Call Click">Call <%= p %></a><% }) %>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,19 @@
+<% if (faqs.length) { %>
+<section class="section bg-parchment" aria-labelledby="faq-h">
+  <div class="container narrow">
+    <div class="section-head">
+      <p class="eyebrow">Good to know</p>
+      <h2 id="faq-h">Frequently asked questions</h2>
+      <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+    </div>
+    <div class="faq">
+      <% faqs.forEach(function (f, i) { %>
+        <details<%= i === 0 ? ' open' : '' %>>
+          <summary><h3><%= f.question %></h3></summary>
+          <div class="faq-a"><%- renderText(f.answer) %></div>
+        </details>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<% } %>

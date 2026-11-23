@@ -1,0 +1,17 @@
+<%- include('_top', { title: 'Settings' }) %>
+<h1>Site settings</h1>
+<% if (saved) { %><p class="ok" role="status">Settings saved.</p><% } %>
+<% if (errors.length) { %><div class="error" role="alert"><p>Please fix the following:</p><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div><% } %>
+<form method="post" action="/admin/settings" enctype="multipart/form-data" class="stack">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <% groups.forEach(function (g) { %>
+    <fieldset>
+      <legend><%= g %></legend>
+      <% defs.filter(function (d) { return d.group === g; }).forEach(function (d) { %>
+        <%- include('_field', { f: { name: d.key, label: d.label, type: d.type, help: d.help, options: d.options, review: d.review, rows: 10 }, val: values[d.key], err: '' }) %>
+      <% }) %>
+    </fieldset>
+  <% }) %>
+  <button class="btn" type="submit">Save settings</button>
+</form>
+<%- include('_bottom') %>

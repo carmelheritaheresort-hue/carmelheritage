@@ -1,0 +1,16 @@
+<%
+  const fields = [
+    ['name', 'Full name', 'text', 'name'], ['phone', 'Mobile (with country code)', 'tel', 'tel'], ['email', 'Email', 'email', 'email'],
+    ['alt_phone', 'Other phone', 'tel', 'off'], ['city', 'City / town', 'text', 'off'], ['country', 'Country', 'text', 'off']
+  ];
+%>
+<div class="filters">
+<% fields.forEach(function (x) { %>
+  <div class="field<%= errors[x[0]] ? ' has-error' : '' %>"><label for="g-<%= x[0] %>"><%= x[1] %></label>
+    <input id="g-<%= x[0] %>" name="<%= x[0] %>" type="<%= x[2] %>" autocomplete="<%= x[3] %>" value="<%= f[x[0]] || '' %>">
+    <% if (errors[x[0]]) { %><p class="error" role="alert"><%= errors[x[0]] %></p><% } %></div>
+<% }) %>
+</div>
+<div class="field"><label for="g-notes">Staff notes (preferences, special requests; never shown to the guest)</label>
+  <textarea id="g-notes" name="notes" rows="5"><%= f.notes || '' %></textarea>
+  <p class="help">Do not record ID numbers or health details here.</p></div>

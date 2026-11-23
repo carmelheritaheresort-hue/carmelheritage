@@ -1,0 +1,40 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main">
+  <%- include('partials/page-hero', { heroEyebrow: 'Visit', heroTitle: 'Contact and <em>directions</em>', heroLead: 'Call the Centre, message on WhatsApp, or send an enquiry.', heroImage: s.contact_image, heroAlt: s.contact_image_alt }) %>
+  <section class="section">
+    <div class="container split">
+      <div class="info-card">
+        <p class="eyebrow">Contact details</p>
+        <h2 class="h3"><%= s.org_name %></h2>
+        <ul class="info-list">
+          <li><span class="k">Address</span><address><%= address %></address></li>
+          <% phones.forEach(function (p, i) { %><li><span class="k">Phone<%= phones.length > 1 ? ' ' + (i + 1) : '' %></span><a href="<%= tel(p) %>" data-track="Call Click"><%= p %></a></li><% }) %>
+          <% if (s.contact_email) { %><li><span class="k">Email</span><a href="mailto:<%= s.contact_email %>"><%= s.contact_email %></a></li><% } %>
+          <% if (s.facebook_url) { %><li><span class="k">Facebook</span><a href="<%= s.facebook_url %>" rel="noopener me">Facebook page</a></li><% } %>
+          <% if (s.instagram_url) { %><li><span class="k">Instagram</span><a href="<%= s.instagram_url %>" rel="noopener me">Instagram profile</a></li><% } %>
+          <% if (s.youtube_url) { %><li><span class="k">YouTube</span><a href="<%= s.youtube_url %>" rel="noopener me">YouTube channel</a></li><% } %>
+        </ul>
+        <div class="btn-row">
+          <a class="btn btn-whatsapp" href="<%= waLink('Hello ' + s.site_name + ', I\u2019d like to make an enquiry.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">Chat on WhatsApp</a>
+          <a class="btn btn-primary" href="/book">Book your stay</a>
+        </div>
+      </div>
+      <div>
+        <p class="eyebrow">Directions</p>
+        <h2>Finding <em>the Centre</em></h2>
+        <img class="ornament left" src="/img/ornament.svg" alt="" width="200" height="20">
+        <p>The Centre is at Bhoothathankettu, near Kothamangalam in Ernakulam district, Kerala.</p>
+        <% if (directionsUrl) { %>
+          <p><a class="btn btn-outline" href="<%= directionsUrl %>" target="_blank" rel="noopener">Open directions in maps<span class="sr-only"> (opens in a new tab)</span></a></p>
+        <% } else { %>
+          <p>Please call the Centre for directions and help planning your journey.</p>
+        <% } %>
+        <% if (mapEmbed) { %>
+          <div class="frame"><div class="frame-inner map"><iframe title="Map showing the location of <%= s.site_name %>" src="<%= mapEmbed %>" loading="lazy" referrerpolicy="no-referrer-when-downgrade" width="600" height="420"></iframe></div></div>
+        <% } %>
+      </div>
+    </div>
+  </section>
+</main>
+<%- include('partials/footer') %>

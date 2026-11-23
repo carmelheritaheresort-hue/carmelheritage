@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= seo.title %></title>
+<meta name="description" content="<%= seo.description %>">
+<link rel="canonical" href="<%= siteUrl + (seo.path === '/' ? '/' : seo.path) %>">
+<meta name="robots" content="<%= !s.site_live ? 'noindex,nofollow' : (seo.noindex ? 'noindex,follow' : 'index,follow,max-image-preview:large') %>">
+<meta name="theme-color" content="#1d3328">
+<% const ogImage = seo.image || s.og_image; %>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="<%= s.site_name %>">
+<meta property="og:locale" content="en_IN">
+<meta property="og:title" content="<%= seo.title %>">
+<meta property="og:description" content="<%= seo.description %>">
+<meta property="og:url" content="<%= siteUrl + (seo.path === '/' ? '/' : seo.path) %>">
+<% if (ogImage) { %><meta property="og:image" content="<%= /^https?:/.test(ogImage) ? ogImage : siteUrl + ogImage %>">
+<% } %><meta name="twitter:card" content="<%= ogImage ? 'summary_large_image' : 'summary' %>">
+<meta name="twitter:title" content="<%= seo.title %>">
+<meta name="twitter:description" content="<%= seo.description %>">
+<link rel="icon" href="/img/favicon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="/img/favicon-192.png">
+<link rel="preload" href="/fonts/cormorant-garamond-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/mulish-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/site.css">
+<script src="/js/init.js"></script>
+<% (seo.jsonld || []).forEach(function (ld) { %><script type="application/ld+json"><%- jsonLd(ld) %></script>
+<% }) %><% if (analytics) { %><script defer data-domain="<%= analytics.domain %>" src="<%= analytics.src %>"></script>
+<% } %></head>
+<body>

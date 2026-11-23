@@ -1,0 +1,67 @@
+<% const fParts = String(s.site_name).split(' '); const f1 = fParts.shift(); const f2 = fParts.join(' '); %>
+<footer class="site-footer kasavu">
+  <div class="container footer-grid">
+    <section aria-labelledby="f-brand">
+      <h2 id="f-brand" class="sr-only"><%= s.site_name %></h2>
+      <div class="footer-brand">
+        <img src="/img/logo-emblem-gold.png" alt="" width="62" height="61">
+        <span class="brand-text" aria-hidden="true"><span class="brand-1"><%= f1 %></span><% if (f2) { %><span class="brand-2"><%= f2 %></span><% } %></span>
+      </div>
+      <p class="footer-tag">A sanctuary for integrated living, rooted in the traditions and principles of Ayurveda.</p>
+      <p><%= s.org_name %></p>
+      <p><a class="btn btn-whatsapp btn-sm" href="<%= waLink('Hello ' + s.site_name + ', I\u2019d like to make an enquiry.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">Chat on WhatsApp</a></p>
+    </section>
+    <nav aria-labelledby="f-explore">
+      <h2 id="f-explore" class="footer-title">Explore</h2>
+      <ul class="plain">
+        <li><a href="/about">About the Centre</a></li>
+        <li><a href="/stay">Stay</a></li>
+        <li><a href="/stay/cottages">Cottages</a></li>
+        <li><a href="/stay/standard-rooms">Standard Rooms</a></li>
+        <li><a href="/treatments">Treatments</a></li>
+        <li><a href="/facilities">Facilities</a></li>
+        <li><a href="/management">Management</a></li>
+        <li><a href="/gallery">Gallery</a></li>
+      </ul>
+    </nav>
+    <nav aria-labelledby="f-info">
+      <h2 id="f-info" class="footer-title">Information</h2>
+      <ul class="plain">
+        <li><a href="/book">Book Your Stay</a></li>
+        <li><a href="/enquiry">Booking Enquiry</a></li>
+        <li><a href="/enquiry?type=treatment">Treatment Enquiry</a></li>
+        <li><a href="/contact">Contact and Directions</a></li>
+        <li><a href="/booking-cancellation-policy">Booking and Cancellation Policy</a></li>
+        <li><a href="/privacy-policy">Privacy Policy</a></li>
+        <% if (s.facebook_url) { %><li><a href="<%= s.facebook_url %>" rel="noopener me">Facebook</a></li><% } %>
+        <% if (s.instagram_url) { %><li><a href="<%= s.instagram_url %>" rel="noopener me">Instagram</a></li><% } %>
+        <% if (s.youtube_url) { %><li><a href="<%= s.youtube_url %>" rel="noopener me">YouTube</a></li><% } %>
+      </ul>
+    </nav>
+    <section aria-labelledby="f-visit">
+      <h2 id="f-visit" class="footer-title">Visit</h2>
+      <address><%= address %></address>
+      <ul class="plain">
+        <% phones.forEach(function (p) { %><li><a href="<%= tel(p) %>" data-track="Call Click"><%= p %></a></li><% }) %>
+        <% if (s.contact_email) { %><li><a href="mailto:<%= s.contact_email %>"><%= s.contact_email %></a></li><% } %>
+      </ul>
+    </section>
+  </div>
+  <div class="container footer-base">
+    <span>&copy; <%= new Date().getFullYear() %> <%= s.org_name %></span>
+    <span>Online bookings are confirmed by the Centre after payment. WhatsApp enquiries are not bookings.</span>
+  </div>
+</footer>
+
+<div class="mobile-bar" role="group" aria-label="Quick contact">
+  <a class="btn btn-whatsapp" href="<%= waLink('Hello ' + s.site_name + ', I\u2019d like to make an enquiry.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">WhatsApp</a>
+  <a class="btn btn-outline" href="<%= tel(phones[0] || '') %>" data-track="Call Click">Call</a>
+</div>
+
+<script src="/js/site.js" defer></script>
+<% if (locals.withForm) { %>
+<script src="/js/validation.js" defer></script>
+<script src="/js/enquiry.js" defer></script>
+<% } %>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<%- include('_top', { title: 'Dashboard' }) %>
+<h1>Dashboard</h1>
+<% if (!live) { %><p class="warn" role="note">The site is <strong>not live</strong>: search engines are blocked. Complete the <a href="/admin/checklist">pre-launch checklist</a>, then tick "Site is live" in <a href="/admin/settings">Settings</a>.</p><% } %>
+<% if (user.role === 'admin' || user.role === 'staff') { %>
+<section>
+  <h2>Bookings</h2>
+  <% if (paidCount) { %><p class="warn" role="note"><strong><%= paidCount %></strong> paid booking<%= paidCount === 1 ? '' : 's' %> waiting for you to confirm. <a href="/admin/bookings?status=paid">Review now</a></p><% } else { %><p>No paid bookings are waiting for confirmation.</p><% } %>
+  <p><%= upcoming %> confirmed or paid booking<%= upcoming === 1 ? '' : 's' %> arriving in the next 30 days. <a href="/admin/bookings">All bookings</a> &middot; <a href="/admin/bookings/blocks">Block rooms</a></p>
+</section>
+<section>
+  <h2>Enquiries</h2>
+  <p><strong><%= newCount %></strong> new, <%= total %> in total. <a href="/admin/enquiries?status=new">View new enquiries</a></p>
+  <% if (recent.length) { %>
+  <table>
+    <thead><tr><th scope="col">Received</th><th scope="col">Type</th><th scope="col">Name</th><th scope="col">Status</th></tr></thead>
+    <tbody>
+      <% recent.forEach(function (e) { %>
+      <tr><td><%= fmtDateTime(e.created_at) %></td><td><%= e.type %></td><td><a href="/admin/enquiries/<%= e.id %>"><%= e.name %></a></td><td><span class="badge s-<%= e.status %>"><%= e.status %></span></td></tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</section>
+<% } %>
+<% if (user.role === 'admin' || user.role === 'editor') { %>
+<section>
+  <h2>Content waiting for approval</h2>
+  <ul>
+    <% Object.keys(resources).forEach(function (k) { %>
+      <li><a href="/admin/content/<%= k %>"><%= resources[k].label %></a>: <%= unapproved[k] %> unapproved</li>
+    <% }) %>
+  </ul>
+</section>
+<% } %>
+<%- include('_bottom') %>

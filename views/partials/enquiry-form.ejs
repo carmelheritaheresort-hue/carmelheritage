@@ -1,0 +1,111 @@
+<%
+  const fid = formId;
+  const isStay = formMode === 'stay';
+  const pref = locals.formPref || 'either';
+  const trt = locals.formTreatment || '';
+  const treatmentList = locals.treatments || [];
+%>
+<div class="enquiry" data-enquiry>
+<form class="enquiry-form" id="<%= fid %>" data-enquiry-form data-mode="<%= formMode %>" data-site="<%= s.site_name %>"
+      data-wa="<%= waNumber %>" data-phone="<%= phones[0] || '' %>" data-email="<%= s.contact_email %>"
+      data-today="<%= fc.today %>" data-max-cottage="<%= fc.maxUnits.cottage %>" data-max-standard="<%= fc.maxUnits.standard %>"
+      data-max-either="<%= fc.maxUnits.either %>" method="post" action="/enquiry" novalidate>
+  <div class="form-errors" role="alert" tabindex="-1" hidden></div>
+  <div class="hp" aria-hidden="true"><label>Leave this field empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+  <input type="hidden" name="type" value="<%= formMode %>">
+
+  <div class="form-grid">
+    <% if (isStay) { %>
+    <div class="field quarter">
+      <label for="<%= fid %>-check_in">Check-in <span class="req">(required)</span></label>
+      <input id="<%= fid %>-check_in" name="check_in" type="date" required min="<%= fc.today %>" aria-describedby="<%= fid %>-check_in-err">
+      <p class="err" id="<%= fid %>-check_in-err" data-err-for="check_in" hidden></p>
+    </div>
+    <div class="field quarter">
+      <label for="<%= fid %>-check_out">Check-out <span class="req">(required)</span></label>
+      <input id="<%= fid %>-check_out" name="check_out" type="date" required min="<%= fc.today %>" aria-describedby="<%= fid %>-check_out-err">
+      <p class="err" id="<%= fid %>-check_out-err" data-err-for="check_out" hidden></p>
+    </div>
+    <div class="field quarter">
+      <label for="<%= fid %>-adults">Adults <span class="req">(required)</span></label>
+      <input id="<%= fid %>-adults" name="adults" type="number" inputmode="numeric" min="1" max="30" value="2" required aria-describedby="<%= fid %>-adults-err">
+      <p class="err" id="<%= fid %>-adults-err" data-err-for="adults" hidden></p>
+    </div>
+    <div class="field quarter">
+      <label for="<%= fid %>-children">Children</label>
+      <input id="<%= fid %>-children" name="children" type="number" inputmode="numeric" min="0" max="30" value="0" aria-describedby="<%= fid %>-children-err">
+      <p class="err" id="<%= fid %>-children-err" data-err-for="children" hidden></p>
+    </div>
+    <div class="field">
+      <label for="<%= fid %>-pref">Accommodation <span class="req">(required)</span></label>
+      <select id="<%= fid %>-pref" name="accommodation_pref" required aria-describedby="<%= fid %>-pref-err">
+        <option value="either"<%= pref === 'either' ? ' selected' : '' %>>Either cottage or standard room</option>
+        <option value="cottage"<%= pref === 'cottage' ? ' selected' : '' %>>Cottage</option>
+        <option value="standard"<%= pref === 'standard' ? ' selected' : '' %>>Standard room</option>
+      </select>
+      <p class="err" id="<%= fid %>-pref-err" data-err-for="accommodation_pref" hidden></p>
+    </div>
+    <div class="field">
+      <label for="<%= fid %>-units">Units requested <span class="req">(required)</span></label>
+      <input id="<%= fid %>-units" name="units" type="number" inputmode="numeric" min="1" value="1" required aria-describedby="<%= fid %>-units-err">
+      <p class="err" id="<%= fid %>-units-err" data-err-for="units" hidden></p>
+    </div>
+    <% } else { %>
+    <div class="field">
+      <label for="<%= fid %>-treatment">Treatment of interest <span class="opt">(optional)</span></label>
+      <input id="<%= fid %>-treatment" name="treatment" type="text" maxlength="150" value="<%= trt %>"<%- treatmentList.length ? ` list="${fid}-treatment-list"` : '' %>>
+      <% if (treatmentList.length) { %><datalist id="<%= fid %>-treatment-list"><% treatmentList.forEach(function (t) { %><option value="<%= t.name %>"></option><% }) %></datalist><% } %>
+    </div>
+    <div class="field">
+      <label for="<%= fid %>-check_in">Preferred start date <span class="opt">(optional)</span></label>
+      <input id="<%= fid %>-check_in" name="check_in" type="date" min="<%= fc.today %>" aria-describedby="<%= fid %>-check_in-err">
+      <p class="err" id="<%= fid %>-check_in-err" data-err-for="check_in" hidden></p>
+    </div>
+    <% } %>
+
+    <div class="field">
+      <label for="<%= fid %>-name">Full name <span class="req">(required)</span></label>
+      <input id="<%= fid %>-name" name="name" type="text" autocomplete="name" required maxlength="100" aria-describedby="<%= fid %>-name-err">
+      <p class="err" id="<%= fid %>-name-err" data-err-for="name" hidden></p>
+    </div>
+    <div class="field">
+      <label for="<%= fid %>-phone">WhatsApp / mobile <span class="req">(required)</span></label>
+      <input id="<%= fid %>-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required maxlength="30" placeholder="+91 ..." aria-describedby="<%= fid %>-phone-hint <%= fid %>-phone-err">
+      <p class="hint" id="<%= fid %>-phone-hint">Include the country code, for example +91.</p>
+      <p class="err" id="<%= fid %>-phone-err" data-err-for="phone" hidden></p>
+    </div>
+    <div class="field full">
+      <label for="<%= fid %>-email">Email <span class="opt">(optional)</span></label>
+      <input id="<%= fid %>-email" name="email" type="email" autocomplete="email" maxlength="254" aria-describedby="<%= fid %>-email-err">
+      <p class="err" id="<%= fid %>-email-err" data-err-for="email" hidden></p>
+    </div>
+    <div class="field full">
+      <label for="<%= fid %>-message">Message <span class="opt">(optional)</span></label>
+      <textarea id="<%= fid %>-message" name="message" rows="3" maxlength="1000"></textarea>
+    </div>
+  </div>
+
+  <div class="form-foot">
+    <p class="note">This is an <strong>enquiry</strong>, not a confirmed booking. The Centre must confirm <%= isStay ? 'availability and the applicable rate' : 'whether the treatment is suitable and available, and the applicable rate' %>. See our <a href="/privacy-policy">Privacy Policy</a>.</p>
+    <button class="btn btn-whatsapp btn-lg" type="submit">Send via WhatsApp</button>
+  </div>
+  <noscript><p class="note">This form needs JavaScript. Please call <a href="<%= tel(phones[0] || '') %>"><%= phones[0] %></a> or message us on <a href="<%= waLink() %>">WhatsApp</a>.</p></noscript>
+</form>
+
+<div class="enquiry-success" data-success hidden tabindex="-1" role="status" aria-live="polite">
+  <h2 class="h3" data-success-title>One more step: send the message in WhatsApp</h2>
+  <p data-success-opened>We opened WhatsApp with your enquiry written out. <strong>Press send in WhatsApp</strong> to deliver it to the Centre.</p>
+  <p data-success-blocked hidden><strong>WhatsApp did not open.</strong> Your details are kept below. Copy the message and send it on WhatsApp, or contact the Centre by phone or email.</p>
+  <p>This is an enquiry, not a confirmed booking. The Centre must confirm <%= isStay ? 'availability and the applicable rate' : 'suitability, availability and the applicable rate' %> before anything is arranged.</p>
+  <label for="<%= fid %>-copytext">Your enquiry message</label>
+  <textarea id="<%= fid %>-copytext" class="copy-text" data-copy-text rows="9" readonly></textarea>
+  <div class="btn-row">
+    <a class="btn btn-whatsapp" data-wa-again href="#" target="_blank" rel="noopener">Open WhatsApp again</a>
+    <button class="btn btn-outline" type="button" data-copy>Copy message</button>
+    <a class="btn btn-outline" href="<%= tel(phones[0] || '') %>" data-track="Call Click">Call <%= phones[0] %></a>
+    <% if (s.contact_email) { %><a class="btn btn-outline" data-mail href="mailto:<%= s.contact_email %>">Email us</a><% } %>
+    <button class="btn-link" type="button" data-edit>Edit my enquiry</button>
+  </div>
+  <p class="copy-status small" data-copy-status role="status"></p>
+</div>
+</div>

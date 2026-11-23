@@ -1,0 +1,20 @@
+<%- include('_top', { title: (isNew ? 'Add ' : 'Edit ') + def.singular }) %>
+<p><a href="/admin/content/<%= resName %>">&larr; Back to <%= def.label %></a></p>
+<h1><%= isNew ? 'Add ' : 'Edit ' %><%= def.singular %></h1>
+<% if (locals.saved) { %><p class="ok" role="status">Saved.</p><% } %>
+<% if (Object.keys(errors).length) { %><p class="error" role="alert">Please fix the highlighted fields.</p><% } %>
+<form method="post" action="/admin/content/<%= resName %><%= isNew ? '' : '/' + item.id %>" enctype="multipart/form-data" class="stack">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <% def.fields.forEach(function (f) { %>
+    <%- include('_field', { f: f, val: item[f.name] == null ? '' : item[f.name], err: errors[f.name] || '' }) %>
+  <% }) %>
+  <button class="btn" type="submit">Save</button>
+</form>
+<% if (!isNew && !def.noDelete) { %>
+<form method="post" action="/admin/content/<%= resName %>/<%= item.id %>/delete" class="inline-form">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <button class="btn danger" type="submit" data-confirm="Delete this item permanently?">Delete</button>
+</form>
+<% } %>
+<script src="/js/admin.js" defer></script>
+<%- include('_bottom') %>

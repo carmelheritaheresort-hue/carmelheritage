@@ -1,0 +1,13 @@
+<%- include('_top', { title: 'My account' }) %>
+<h1>My account</h1>
+<p>Signed in as <strong><%= user.email %></strong> (<%= user.role %>).</p>
+<h2>Change password</h2>
+<% if (error) { %><p class="error" role="alert"><%= error %></p><% } %>
+<form method="post" action="/admin/account" class="stack">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="field"><label for="cur">Current password</label><input id="cur" name="current" type="password" autocomplete="current-password" required></div>
+  <div class="field"><label for="pw">New password (at least 12 characters)</label><input id="pw" name="password" type="password" autocomplete="new-password" minlength="12" required></div>
+  <div class="field"><label for="pw2">Confirm new password</label><input id="pw2" name="confirm" type="password" autocomplete="new-password" minlength="12" required></div>
+  <button class="btn" type="submit">Change password</button>
+</form>
+<%- include('_bottom') %>

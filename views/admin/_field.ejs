@@ -1,0 +1,24 @@
+<%
+  // Expects: f {name,label,type,help,options,required}, val, err, prefix(optional)
+  const id = 'f-' + f.name;
+%>
+<div class="field<%= err ? ' has-error' : '' %>">
+  <% if (f.type === 'bool') { %>
+    <label class="check"><input type="checkbox" id="<%= id %>" name="<%= f.name %>" value="1"<%= val ? ' checked' : '' %>> <%= f.label %></label>
+  <% } else { %>
+    <label for="<%= id %>"><%= f.label %><%= f.required ? ' (required)' : '' %></label>
+    <% if (f.type === 'textarea') { %>
+      <textarea id="<%= id %>" name="<%= f.name %>" rows="<%= f.rows || 6 %>"<%= f.help ? ` aria-describedby=${id}-help` : '' %>><%= val %></textarea>
+    <% } else if (f.type === 'select') { %>
+      <select id="<%= id %>" name="<%= f.name %>"><% f.options.forEach(function (o) { %><option value="<%= o[0] %>"<%= String(val) === o[0] ? ' selected' : '' %>><%= o[1] %></option><% }) %></select>
+    <% } else if (f.type === 'image') { %>
+      <% if (val) { %><p><img class="thumb" src="<%= val %>" alt="Current image"></p><label class="check"><input type="checkbox" name="remove__<%= f.name %>" value="1"> Remove this image</label><% } %>
+      <input type="file" id="<%= id %>" name="file__<%= f.name %>" accept="image/jpeg,image/png,image/webp,image/avif">
+    <% } else { %>
+      <input id="<%= id %>" name="<%= f.name %>" type="<%= f.type === 'number' || f.type === 'percent' ? 'number' : (f.type === 'email' ? 'email' : (f.type === 'url' ? 'url' : 'text')) %>"<%- f.type === 'percent' ? ' step="0.01" min="0" max="100"' : '' %> value="<%= val %>"<%= f.type === 'number' && f.min !== undefined ? ' min=' + f.min : '' %><%= f.required ? ' required' : '' %>>
+    <% } %>
+  <% } %>
+  <% if (f.help) { %><p class="help" id="<%= id %>-help"><%= f.help %></p><% } %>
+  <% if (f.review) { %><p class="help review">Needs owner confirmation before launch.</p><% } %>
+  <% if (err) { %><p class="error" role="alert"><%= err %></p><% } %>
+</div>

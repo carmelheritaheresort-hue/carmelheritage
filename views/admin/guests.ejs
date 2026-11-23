@@ -1,0 +1,43 @@
+<%- include('_top', { title: 'Guests' }) %>
+<h1>Guests</h1>
+<p>Every online booking and website enquiry creates or updates a guest profile, matched by mobile number, then by email. <a href="/admin/guests/new">Add a guest by hand</a> (phone or walk-in).</p>
+<form method="get" action="/admin/guests" class="filters">
+  <div class="field"><label for="q">Search</label><input id="q" name="q" value="<%= q.q || '' %>" placeholder="Name, mobile, email, city"></div>
+  <div class="field"><label for="type">Show</label>
+    <select id="type" name="type">
+      <option value="">All guests</option>
+      <option value="booked"<%= q.type === 'booked' ? ' selected' : '' %>>Have booked</option>
+      <option value="returning"<%= q.type === 'returning' ? ' selected' : '' %>>Returning (2+ bookings)</option>
+      <option value="upcoming"<%= q.type === 'upcoming' ? ' selected' : '' %>>Upcoming stay</option>
+      <option value="enquiry_only"<%= q.type === 'enquiry_only' ? ' selected' : '' %>>Enquiries only, no booking</option>
+    </select></div>
+  <div class="field"><label for="sort">Sort by</label>
+    <select id="sort" name="sort">
+      <option value="">Most recent</option>
+      <option value="name"<%= q.sort === 'name' ? ' selected' : '' %>>Name</option>
+      <option value="stays"<%= q.sort === 'stays' ? ' selected' : '' %>>Most bookings</option>
+      <option value="value"<%= q.sort === 'value' ? ' selected' : '' %>>Highest value</option>
+    </select></div>
+  <div class="field"><button class="btn" type="submit">Filter</button> <a href="/admin/guests">Reset</a></div>
+</form>
+<p><%= total %> guest<%= total === 1 ? '' : 's' %><%= total > rows.length ? ' (first ' + rows.length + ' shown)' : '' %>. <a href="/admin/guests/export.csv<%= qs ? '?' + qs : '' %>">Export as CSV</a></p>
+<table>
+  <thead><tr><th scope="col">Guest</th><th scope="col">Mobile</th><th scope="col">Email</th><th scope="col">Bookings</th><th scope="col">Nights</th><th scope="col">Largest party</th><th scope="col">Booking value</th><th scope="col">Last / next stay</th><th scope="col">Enquiries</th></tr></thead>
+  <tbody>
+  <% rows.forEach(function (g) { %>
+    <tr>
+      <td><a href="/admin/guests/<%= g.id %>"><%= g.name || '(no name)' %></a><% if (g.bookings_count >= 2) { %> <span class="badge b-confirmed">Returning</span><% } %><% if (g.city) { %><br><small><%= g.city %><%= g.country ? ', ' + g.country : '' %></small><% } %></td>
+      <td><%= g.phone || '-' %></td>
+      <td><%= g.email || '-' %></td>
+      <td><%= g.bookings_count %></td>
+      <td><%= g.nights %></td>
+      <td><%= g.max_party ? g.max_party + ' guests' : '-' %></td>
+      <td><%= g.value_paise ? rupees(g.value_paise) : '-' %></td>
+      <td><%= g.last_stay || '-' %><% if (g.next_stay) { %><br><small>Next: <%= g.next_stay %></small><% } %></td>
+      <td><%= g.enquiries_count %></td>
+    </tr>
+  <% }) %>
+  <% if (!rows.length) { %><tr><td colspan="9">No guests match.</td></tr><% } %>
+  </tbody>
+</table>
+<%- include('_bottom') %>
