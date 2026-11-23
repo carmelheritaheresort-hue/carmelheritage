@@ -12,48 +12,47 @@ function phoneKey(p) {
 }
 const emailKey = e => String(e || '').trim().toLowerCase();
 
-function find({ phone, email }) {
+async function find({ phone, email }) {
   const pk = phoneKey(phone), ek = emailKey(email);
-  if (pk) { const g = db.prepare('SELECT * FROM guests WHERE phone_key=? ORDER BY id LIMIT 1').get(pk); if (g) return g; }
-  if (ek) { const g = db.prepare('SELECT * FROM guests WHERE email=? ORDER BY id LIMIT 1').get(ek); if (g) return g; }
+  if (pk) { const g = await db.get('SELECT * FROM guests WHERE phone_key=? ORDER BY id LIMIT 1', pk); if (g) return g; }
+  if (ek) { const g = await db.get('SELECT * FROM guests WHERE email=? ORDER BY id LIMIT 1', ek); if (g) return g; }
   return null;
 }
 
 // Finds or creates the profile and returns its id. Never overwrites details staff have edited,
 // only fills gaps and moves "last seen" forward.
-function upsert({ name, phone, email, source, at }) {
+async function upsert({ name, phone, email, source, at }) {
   const when = at || new Date().toISOString();
   const pk = phoneKey(phone), ek = emailKey(email);
   if (!pk && !ek) return null;
-  const g = find({ phone, email });
+  const g = await find({ phone, email });
+  const now = new Date().toISOString();
   if (g) {
-    db.prepare(`UPDATE guests SET
-        name = CASE WHEN name = '' THEN ? ELSE name END,
-        phone = CASE WHEN phone = '' THEN ? ELSE phone END,
-        phone_key = CASE WHEN phone_key = '' THEN ? ELSE phone_key END,
-        email = CASE WHEN email = '' THEN ? ELSE email END,
-        first_seen_at = CASE WHEN ? < first_seen_at THEN ? ELSE first_seen_at END,
-        last_seen_at = CASE WHEN ? > last_seen_at THEN ? ELSE last_seen_at END,
-        updated_at = ?
-      WHERE id = ?`).run(name || '', phone || '', pk, ek, when, when, when, when, new Date().toISOString(), g.id);
+    await db.run(`UPDATE guests SET
+        name = CASE WHEN name = '' THEN @name ELSE name END,
+        phone = CASE WHEN phone = '' THEN @phone ELSE phone END,
+        phone_key = CASE WHEN phone_key = '' THEN @pk ELSE phone_key END,
+        email = CASE WHEN email = '' THEN @ek ELSE email END,
+        first_seen_at = LEAST(first_seen_at, @when),
+        last_seen_at = GREATEST(last_seen_at, @when),
+        updated_at = @now
+      WHERE id = @id`, { name: name || '', phone: phone || '', pk, ek, when, now, id: g.id });
     return g.id;
   }
-  const now = new Date().toISOString();
-  const info = db.prepare(`INSERT INTO guests (name,phone,phone_key,email,source,first_seen_at,last_seen_at,created_at,updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?)`).run(name || '', phone || '', pk, ek, source || '', when, when, now, now);
-  return Number(info.lastInsertRowid);
+  return db.insert(`INSERT INTO guests (name,phone,phone_key,email,source,first_seen_at,last_seen_at,created_at,updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?)`, name || '', phone || '', pk, ek, source || '', when, when, now, now);
 }
 
-function link(table, id, guestId) {
+async function link(table, id, guestId) {
   if (!guestId || !['bookings', 'enquiries'].includes(table)) return;
-  db.prepare(`UPDATE ${table} SET guest_id=? WHERE id=?`).run(guestId, id);
+  await db.run(`UPDATE ${table} SET guest_id=? WHERE id=?`, guestId, id);
 }
 
 // Safe wrapper used by the public routes: a profile problem must never block a booking or enquiry.
-function attach(table, row, source) {
+async function attach(table, row, source) {
   try {
-    const gid = upsert({ name: row.name, phone: row.phone, email: row.email, source, at: row.created_at });
-    link(table, row.id, gid);
+    const gid = await upsert({ name: row.name, phone: row.phone, email: row.email, source, at: row.created_at });
+    await link(table, row.id, gid);
     return gid;
   } catch (e) {
     console.error('Guest profile link failed:', e.message);
@@ -61,17 +60,17 @@ function attach(table, row, source) {
   }
 }
 
-function backfill() {
+async function backfill() {
   let n = 0;
-  db.transaction(() => {
+  await db.tx(async () => {
     for (const t of ['bookings', 'enquiries']) {
-      const rows = db.prepare(`SELECT id, name, phone, email, created_at FROM ${t} WHERE guest_id IS NULL ORDER BY created_at`).all();
+      const rows = await db.all(`SELECT id, name, phone, email, created_at FROM ${t} WHERE guest_id IS NULL ORDER BY created_at`);
       for (const r of rows) {
-        const gid = upsert({ ...r, source: t === 'bookings' ? 'online booking' : 'enquiry', at: r.created_at });
-        if (gid) { link(t, r.id, gid); n++; }
+        const gid = await upsert({ ...r, source: t === 'bookings' ? 'online booking' : 'enquiry', at: r.created_at });
+        if (gid) { await link(t, r.id, gid); n++; }
       }
     }
-  })();
+  });
   return n;
 }
 
@@ -87,32 +86,36 @@ const STATS_SQL = `
   (SELECT MIN(b.check_in) FROM bookings b WHERE b.guest_id = g.id AND b.status IN ${KEPT} AND b.check_in >= @today) AS next_stay,
   (SELECT COUNT(*) FROM enquiries e WHERE e.guest_id = g.id) AS enquiries_count`;
 
-function list(q = {}) {
+async function list(q = {}) {
   const w = [], p = { today: todayIST() };
   const term = String(q.q || '').trim().slice(0, 100);
   if (term) {
-    w.push('(g.name LIKE @like OR g.phone LIKE @like OR g.alt_phone LIKE @like OR g.email LIKE @like OR g.city LIKE @like OR (@digits != \'\' AND g.phone_key LIKE @dlike))');
     p.like = `%${term}%`;
     p.digits = term.replace(/\D/g, '');
-    p.dlike = `%${p.digits}%`;
+    const parts = ['g.name ILIKE @like', 'g.phone ILIKE @like', 'g.alt_phone ILIKE @like', 'g.email ILIKE @like', 'g.city ILIKE @like'];
+    if (p.digits.length >= 3) { p.dlike = `%${p.digits}%`; parts.push('g.phone_key LIKE @dlike'); }
+    delete p.digits;
+    w.push('(' + parts.join(' OR ') + ')');
   }
   let having = '';
   if (q.type === 'returning') having = 'WHERE bookings_count >= 2';
   else if (q.type === 'booked') having = 'WHERE bookings_count >= 1';
   else if (q.type === 'enquiry_only') having = 'WHERE bookings_count = 0';
   else if (q.type === 'upcoming') having = 'WHERE next_stay IS NOT NULL';
-  const order = { name: 'name COLLATE NOCASE', value: 'value_paise DESC', stays: 'bookings_count DESC' }[q.sort] || 'last_seen_at DESC';
-  const sql = `SELECT * FROM (SELECT g.*, ${STATS_SQL} FROM guests g ${w.length ? 'WHERE ' + w.join(' AND ') : ''}) ${having} ORDER BY ${order}, id DESC`;
-  return db.prepare(sql).all(p);
+  const order = { name: 'lower(name)', value: 'value_paise DESC', stays: 'bookings_count DESC' }[q.sort] || 'last_seen_at DESC';
+  const sql = `SELECT * FROM (SELECT g.*, ${STATS_SQL} FROM guests g ${w.length ? 'WHERE ' + w.join(' AND ') : ''}) AS x ${having} ORDER BY ${order}, id DESC`;
+  return db.all(sql, p);
 }
 
-function get(id) {
-  return db.prepare(`SELECT g.*, ${STATS_SQL} FROM guests g WHERE g.id = @id`).get({ id: Number(id), today: todayIST() });
+async function get(id) {
+  const n = parseInt(id, 10);
+  if (!(n > 0)) return null;
+  return db.get(`SELECT g.*, ${STATS_SQL} FROM guests g WHERE g.id = @id`, { id: n, today: todayIST() });
 }
 
-function history(id) {
-  const bookings = db.prepare('SELECT * FROM bookings WHERE guest_id=? ORDER BY check_in DESC, id DESC').all(id);
-  const enquiries = db.prepare('SELECT * FROM enquiries WHERE guest_id=? ORDER BY id DESC').all(id);
+async function history(id) {
+  const bookings = await db.all('SELECT * FROM bookings WHERE guest_id=? ORDER BY check_in DESC, id DESC', id);
+  const enquiries = await db.all('SELECT * FROM enquiries WHERE guest_id=? ORDER BY id DESC', id);
   const kept = bookings.filter(b => b.status === 'paid' || b.status === 'confirmed');
   const prefer = kept.reduce((a, b) => ({ c: a.c + b.cottage_units, s: a.s + b.standard_units }), { c: 0, s: 0 });
   return {
@@ -125,43 +128,44 @@ function history(id) {
 }
 
 // Other profiles that share this guest's phone or email: likely duplicates.
-function possibleDuplicates(g) {
-  return db.prepare(`SELECT id, name, phone, email FROM guests WHERE id != ? AND ((phone_key != '' AND phone_key = ?) OR (email != '' AND email = ?)
-    OR (alt_phone != '' AND ? != '' AND replace(replace(replace(alt_phone,' ',''),'+',''),'-','') = ?))`)
-    .all(g.id, g.phone_key, g.email, g.phone_key, g.phone_key);
+async function possibleDuplicates(g) {
+  const rows = await db.all(`SELECT id, name, phone, alt_phone, phone_key, email FROM guests WHERE id != @id AND (
+      (phone_key != '' AND phone_key = @pk) OR (email != '' AND email = @email)
+      OR (alt_phone != '' AND regexp_replace(alt_phone, '\\D', '', 'g') = @pk))`,
+    { id: g.id, pk: g.phone_key || '-', email: g.email || '-' });
+  return rows;
 }
 
-function update(id, f) {
-  db.prepare(`UPDATE guests SET name=?, phone=?, phone_key=?, email=?, alt_phone=?, city=?, country=?, notes=?, updated_at=? WHERE id=?`)
-    .run(f.name, f.phone, phoneKey(f.phone), emailKey(f.email), f.alt_phone, f.city, f.country, f.notes, new Date().toISOString(), id);
+async function update(id, f) {
+  await db.run(`UPDATE guests SET name=?, phone=?, phone_key=?, email=?, alt_phone=?, city=?, country=?, notes=?, updated_at=? WHERE id=?`,
+    f.name, f.phone, phoneKey(f.phone), emailKey(f.email), f.alt_phone, f.city, f.country, f.notes, new Date().toISOString(), id);
 }
 
-function create(f) {
+async function create(f) {
   const now = new Date().toISOString();
-  const info = db.prepare(`INSERT INTO guests (name,phone,phone_key,email,alt_phone,city,country,notes,source,first_seen_at,last_seen_at,created_at,updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(f.name, f.phone, phoneKey(f.phone), emailKey(f.email), f.alt_phone, f.city, f.country, f.notes, 'added by staff', now, now, now, now);
-  return Number(info.lastInsertRowid);
+  return db.insert(`INSERT INTO guests (name,phone,phone_key,email,alt_phone,city,country,notes,source,first_seen_at,last_seen_at,created_at,updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`, f.name, f.phone, phoneKey(f.phone), emailKey(f.email), f.alt_phone, f.city, f.country, f.notes, 'added by staff', now, now, now, now);
 }
 
 // Moves all history from `fromId` into `intoId`, keeps any details the target is missing, then deletes `fromId`.
-function merge(intoId, fromId) {
+async function merge(intoId, fromId) {
   if (Number(intoId) === Number(fromId)) return;
-  db.transaction(() => {
-    const a = db.prepare('SELECT * FROM guests WHERE id=?').get(intoId), b = db.prepare('SELECT * FROM guests WHERE id=?').get(fromId);
+  await db.tx(async () => {
+    const a = await db.get('SELECT * FROM guests WHERE id=?', intoId), b = await db.get('SELECT * FROM guests WHERE id=?', fromId);
     if (!a || !b) throw new Error('Guest not found');
-    for (const t of ['bookings', 'enquiries']) db.prepare(`UPDATE ${t} SET guest_id=? WHERE guest_id=?`).run(a.id, b.id);
+    for (const t of ['bookings', 'enquiries']) await db.run(`UPDATE ${t} SET guest_id=? WHERE guest_id=?`, a.id, b.id);
     const pick = k => a[k] || b[k];
     const notes = [a.notes, b.notes].filter(Boolean).join('\n');
-    db.prepare(`UPDATE guests SET phone=?, phone_key=?, email=?, alt_phone=?, city=?, country=?, notes=?,
-      first_seen_at=?, last_seen_at=?, updated_at=? WHERE id=?`).run(
+    await db.run(`UPDATE guests SET phone=?, phone_key=?, email=?, alt_phone=?, city=?, country=?, notes=?,
+      first_seen_at=?, last_seen_at=?, updated_at=? WHERE id=?`,
       pick('phone'), pick('phone_key'), pick('email'), a.alt_phone || (b.phone && b.phone_key !== a.phone_key ? b.phone : b.alt_phone),
       pick('city'), pick('country'), notes,
       a.first_seen_at < b.first_seen_at ? a.first_seen_at : b.first_seen_at,
       a.last_seen_at > b.last_seen_at ? a.last_seen_at : b.last_seen_at, new Date().toISOString(), a.id);
-    db.prepare('DELETE FROM guests WHERE id=?').run(b.id);
-  })();
+    await db.run('DELETE FROM guests WHERE id=?', b.id);
+  });
 }
 
-function remove(id) { db.prepare('DELETE FROM guests WHERE id=?').run(id); }
+async function remove(id) { await db.run('DELETE FROM guests WHERE id=?', id); }
 
 module.exports = { phoneKey, upsert, attach, backfill, list, get, history, possibleDuplicates, update, create, merge, remove };

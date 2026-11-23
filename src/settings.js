@@ -162,11 +162,12 @@ function coerce(d, raw) {
   return raw;
 }
 
-function getSettings() {
+// Cached for 15 seconds per server instance, so a change in the admin shows on the site within that time.
+async function getSettings() {
   if (cache && Date.now() - cacheAt < 15000) return cache;
   const s = defaults();
   try {
-    for (const r of db.prepare('SELECT key,value FROM settings').all()) {
+    for (const r of await db.all('SELECT key,value FROM settings')) {
       const d = byKey[r.key];
       if (d) s[r.key] = coerce(d, r.value);
     }
@@ -181,11 +182,14 @@ function getSettings() {
 
 function invalidate() { cache = null; }
 
-function saveSettings(values) {
-  const stmt = db.prepare(`INSERT INTO settings(key,value,updated_at) VALUES (?,?,?)
-    ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at`);
+async function saveSettings(values) {
   const now = new Date().toISOString();
-  db.transaction(() => { for (const [k, v] of Object.entries(values)) stmt.run(k, String(v), now); })();
+  await db.tx(async () => {
+    for (const [k, v] of Object.entries(values)) {
+      await db.run(`INSERT INTO settings(key,value,updated_at) VALUES (?,?,?)
+        ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at`, k, String(v), now);
+    }
+  });
   invalidate();
 }
 

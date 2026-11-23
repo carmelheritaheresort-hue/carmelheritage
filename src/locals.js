@@ -16,8 +16,9 @@ const NAV = [
 
 const EMBED_PREFIXES = ['https://www.google.com/maps/embed', 'https://www.openstreetmap.org/export/embed'];
 
-module.exports = function locals(req, res, next) {
-  const s = getSettings();
+module.exports = async function locals(req, res, next) {
+  let s;
+  try { s = await getSettings(); } catch (e) { return next(e); }
   const L = res.locals;
   L.s = s;
   L.siteUrl = config.siteUrl;

@@ -2,7 +2,7 @@ const express = require('express');
 const config = require('../config');
 const seo = require('../seo');
 const content = require('../content');
-const { renderText } = require('../util');
+const { renderText, todayIST, wrap } = require('../util');
 const booking = require('../booking');
 const payments = require('../payments');
 
@@ -11,7 +11,6 @@ const router = express.Router();
 const CRUMB_HOME = { name: 'Home', path: '/' };
 
 function page(req, res, view, meta, data = {}) {
-  const s = res.locals.s;
   const crumbs = meta.crumbs || [];
   const breadcrumbs = crumbs.length ? [CRUMB_HOME, ...crumbs] : [];
   const jsonld = [...(meta.jsonld || [])];
@@ -30,49 +29,47 @@ function page(req, res, view, meta, data = {}) {
   });
 }
 
-function withFormCtx(types) { return { fc: content.formContext(types) }; }
+const get = (path, fn) => router.get(path, wrap(fn));
 
-router.get('/', (req, res) => {
+get('/', async (req, res) => {
   const s = res.locals.s;
-  const types = content.accommodation();
-  const faqs = content.faqs();
-  const treatments = content.approved('treatments');
-  const gallery = content.approved('gallery');
+  const [types, faqs, treatments, gallery, facilities, testimonials] = await Promise.all([
+    content.accommodation(), content.faqs(), content.approved('treatments'), content.approved('gallery'),
+    content.approved('facilities'), content.testimonials()
+  ]);
   page(req, res, 'home', {
     title: `${s.site_name} | Ayurveda and Stay at Bhoothathankettu`,
     description: `${s.org_name}, Bhoothathankettu, Kothamangalam, Kerala. Explore 8 cottages, 7 standard rooms and Ayurveda treatments, and book your stay online.`,
     jsonld: [seo.businessLd(s, res.locals.address), seo.websiteLd(s), ...(faqs.length ? [seo.faqLd(faqs)] : [])]
   }, {
     types, faqs, treatments: treatments.slice(0, 4), allTreatments: treatments,
-    facilities: content.approved('facilities'),
-    gallery: gallery.slice(0, 6),
-    testimonials: content.testimonials(),
+    facilities, gallery: gallery.slice(0, 6), testimonials,
     fromPrice: Math.min(...types.map(t => t.price_per_night || Infinity)),
-    ...withFormCtx(types)
+    fc: content.formContext(types)
   });
 });
 
-router.get('/about', (req, res) => {
+get('/about', async (req, res) => {
   const s = res.locals.s;
   page(req, res, 'about', {
     title: `About ${s.site_name} | A Sanctuary for Integrated Living`,
     description: `The story of ${s.org_name}: initiated in 1983, rooted in Ayurveda, and growing from Nirmalgram Welfare Centre and the CMI Carmel Province.`,
     crumbs: [{ name: 'About', path: '/about' }]
-  }, { testimonials: content.testimonials() });
+  }, { testimonials: await content.testimonials() });
 });
 
-router.get('/stay', (req, res) => {
+get('/stay', async (req, res) => {
   const s = res.locals.s;
   page(req, res, 'stay', {
     title: `Stay: Cottages and Standard Rooms | ${s.site_name}`,
     description: `Stay at ${s.site_name}, Bhoothathankettu: 8 cottages and 7 standard rooms. Check availability for your dates and book online.`,
     crumbs: [{ name: 'Stay', path: '/stay' }]
-  }, { types: content.accommodation() });
+  }, { types: await content.accommodation() });
 });
 
 function stayDetail(slug, label) {
-  return (req, res, next) => {
-    const types = content.accommodation();
+  return async (req, res, next) => {
+    const types = await content.accommodation();
     const type = types.find(t => t.slug === slug);
     if (!type) return next();
     const s = res.locals.s;
@@ -83,46 +80,46 @@ function stayDetail(slug, label) {
     }, { type, others: types.filter(t => t.slug !== slug), withForm: false });
   };
 }
-router.get('/stay/cottages', stayDetail('cottages', 'Cottages'));
-router.get('/stay/standard-rooms', stayDetail('standard-rooms', 'Standard Rooms'));
+get('/stay/cottages', stayDetail('cottages', 'Cottages'));
+get('/stay/standard-rooms', stayDetail('standard-rooms', 'Standard Rooms'));
 
-router.get('/treatments', (req, res) => {
+get('/treatments', async (req, res) => {
   const s = res.locals.s;
   page(req, res, 'treatments', {
     title: `Ayurveda Treatments | ${s.site_name}`,
     description: `Classical Ayurvedic medicines, treatments and therapies at ${s.site_name}, Bhoothathankettu. Contact the Centre to ask what is suitable for you.`,
     crumbs: [{ name: 'Treatments', path: '/treatments' }]
-  }, { treatments: content.approved('treatments') });
+  }, { treatments: await content.approved('treatments') });
 });
 
-router.get('/facilities', (req, res) => {
+get('/facilities', async (req, res) => {
   const s = res.locals.s;
   page(req, res, 'facilities', {
     title: `Facilities and Experiences | ${s.site_name}`,
     description: `Facilities and experiences at ${s.site_name}, Bhoothathankettu, Kothamangalam. Contact the Centre to confirm what is available for your dates.`,
     crumbs: [{ name: 'Facilities', path: '/facilities' }]
-  }, { facilities: content.approved('facilities') });
+  }, { facilities: await content.approved('facilities') });
 });
 
-router.get('/management', (req, res) => {
+get('/management', async (req, res) => {
   const s = res.locals.s;
   page(req, res, 'management', {
     title: `Management | ${s.site_name}`,
     description: `The people who manage ${s.org_name}, Bhoothathankettu, Kothamangalam, Kerala.`,
     crumbs: [{ name: 'Management', path: '/management' }]
-  }, { people: content.approved('management') });
+  }, { people: await content.approved('management') });
 });
 
-router.get('/gallery', (req, res) => {
+get('/gallery', async (req, res) => {
   const s = res.locals.s;
   page(req, res, 'gallery', {
     title: `Gallery | ${s.site_name}`,
     description: `Photographs of ${s.site_name} at Bhoothathankettu, Kothamangalam, Kerala.`,
     crumbs: [{ name: 'Gallery', path: '/gallery' }]
-  }, { gallery: content.approved('gallery') });
+  }, { gallery: await content.approved('gallery') });
 });
 
-router.get('/contact', (req, res) => {
+get('/contact', async (req, res) => {
   const s = res.locals.s;
   page(req, res, 'contact', {
     title: `Contact and Directions | ${s.site_name}`,
@@ -132,9 +129,9 @@ router.get('/contact', (req, res) => {
   });
 });
 
-router.get('/enquiry', (req, res) => {
+get('/enquiry', async (req, res) => {
   const s = res.locals.s;
-  const types = content.accommodation();
+  const [types, treatments] = await Promise.all([content.accommodation(), content.approved('treatments')]);
   const mode = req.query.type === 'treatment' ? 'treatment' : 'stay';
   const pref = ['cottage', 'standard', 'either'].includes(req.query.stay) ? req.query.stay : 'either';
   page(req, res, 'enquiry', {
@@ -144,15 +141,13 @@ router.get('/enquiry', (req, res) => {
     crumbs: [{ name: 'Booking Enquiry', path: '/enquiry' }]
   }, {
     mode, pref, prefTreatment: String(req.query.treatment || '').slice(0, 150),
-    treatments: content.approved('treatments'),
-    withForm: true,
-    ...withFormCtx(types)
+    treatments, withForm: true, fc: content.formContext(types)
   });
 });
 
-router.get('/book', (req, res) => {
+get('/book', async (req, res) => {
   const s = res.locals.s;
-  const rooms = content.safe(() => booking.roomTypes(), {});
+  const rooms = await content.safe(() => booking.roomTypes(), {});
   const provider = payments.provider();
   const open = !!s.booking_enabled && !!provider && Object.keys(rooms).length > 0;
   const q = req.query;
@@ -172,15 +167,15 @@ router.get('/book', (req, res) => {
   }, {
     open, provider, rooms, pre,
     pricing: booking.pricing(s),
-    today: require('../util').todayIST(),
+    today: todayIST(),
     testMode: provider === 'dev' || (provider === 'razorpay' && payments.isTestKey()),
     replyHours: Number(s.booking_reply_hours) || 0,
     holdMinutes: booking.HOLD_MINUTES
   });
 });
 
-router.get('/book/confirmation/:ref', (req, res, next) => {
-  const b = content.safe(() => booking.byRef(req.params.ref), null);
+get('/book/confirmation/:ref', async (req, res, next) => {
+  const b = await content.safe(() => booking.byRef(req.params.ref), null);
   if (!b || !booking.tokenOk(b, req.query.t)) return next();
   const s = res.locals.s;
   res.set('Cache-Control', 'no-store');
@@ -211,7 +206,7 @@ function policy(path, key, title, descFn, crumb) {
   });
 }
 policy('/privacy-policy', 'privacy_body', 'Privacy Policy', n => `How ${n} collects, uses and keeps the details you send in an enquiry.`, 'Privacy Policy');
-policy('/booking-cancellation-policy', 'policy_body', 'Booking and Cancellation Policy', n => `How booking enquiries, confirmations and cancellations work at ${n}.`, 'Booking and Cancellation Policy');
+policy('/booking-cancellation-policy', 'policy_body', 'Booking and Cancellation Policy', n => `How online bookings, confirmations and cancellations work at ${n}.`, 'Booking and Cancellation Policy');
 
 const SITEMAP = ['/', '/about', '/stay', '/stay/cottages', '/stay/standard-rooms', '/treatments', '/facilities', '/management', '/gallery', '/contact', '/privacy-policy', '/booking-cancellation-policy'];
 
@@ -228,7 +223,5 @@ router.get('/robots.txt', (req, res) => {
     ? `User-agent: *\nDisallow: /admin\nDisallow: /api\nDisallow: /enquiry\nDisallow: /book\n\nSitemap: ${config.siteUrl}/sitemap.xml\n`
     : 'User-agent: *\nDisallow: /\n');
 });
-
-router.get('/healthz', (req, res) => res.type('text/plain').send('ok'));
 
 module.exports = router;

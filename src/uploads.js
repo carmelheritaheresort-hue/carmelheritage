@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+// Image uploads, stored in Supabase Storage (a public bucket). Files are kept in memory while
+// they are checked, so nothing is written to the server's disk (Vercel has no persistent disk).
 const crypto = require('crypto');
 const multer = require('multer');
 const config = require('./config');
@@ -8,47 +8,84 @@ let sharp = null;
 try { sharp = require('sharp'); } catch { /* optional: images are stored as uploaded */ }
 
 const ALLOWED = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/avif': '.avif' };
+const sb = config.supabase;
 
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => cb(null, config.uploadDir),
-    filename: (req, file, cb) => cb(null, crypto.randomBytes(16).toString('hex') + (ALLOWED[file.mimetype] || '.bin'))
-  }),
-  limits: { fileSize: 5 * 1024 * 1024, files: 4 },
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 4 * 1024 * 1024, files: 4 }, // Vercel limits request bodies to 4.5 MB
   fileFilter: (req, file, cb) => cb(null, !!ALLOWED[file.mimetype])
 });
 
-function sniff(file) {
-  const fd = fs.openSync(file, 'r');
-  const b = Buffer.alloc(16);
-  fs.readSync(fd, b, 0, 16, 0);
-  fs.closeSync(fd);
-  const jpg = b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
-  const png = b.slice(0, 4).toString('hex') === '89504e47';
-  const webp = b.slice(0, 4).toString() === 'RIFF' && b.slice(8, 12).toString() === 'WEBP';
-  const avif = b.slice(4, 8).toString() === 'ftyp';
-  return jpg || png || webp || avif;
+function sniff(b) {
+  if (!b || b.length < 12) return '';
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg';
+  if (b.subarray(0, 4).toString('hex') === '89504e47') return 'image/png';
+  if (b.subarray(0, 4).toString() === 'RIFF' && b.subarray(8, 12).toString() === 'WEBP') return 'image/webp';
+  if (b.subarray(4, 8).toString() === 'ftyp') return 'image/avif';
+  return '';
 }
 
-// Validates the uploaded file, optionally resizes it, and returns its public URL path.
+function headers(extra = {}) {
+  // New-style keys (sb_secret_...) go only in the apikey header; legacy JWT keys also need Authorization.
+  const h = { apikey: sb.secretKey, ...extra };
+  if (!sb.secretKey.startsWith('sb_')) h.Authorization = `Bearer ${sb.secretKey}`;
+  return h;
+}
+
+function requireStorage() {
+  if (!sb.url || !sb.secretKey) throw new Error('Image storage is not configured (SUPABASE_URL and SUPABASE_SECRET_KEY).');
+}
+
+const publicPrefix = () => `${sb.url}/storage/v1/object/public/${sb.bucket}/`;
+
+async function putObject(name, buffer, contentType) {
+  requireStorage();
+  const r = await fetch(`${sb.url}/storage/v1/object/${sb.bucket}/${name}`, {
+    method: 'POST',
+    headers: headers({ 'Content-Type': contentType, 'Cache-Control': 'max-age=31536000', 'x-upsert': 'false' }),
+    body: buffer
+  });
+  if (!r.ok) throw new Error(`Image upload failed (${r.status}): ${(await r.text()).slice(0, 200)}`);
+  return publicPrefix() + name;
+}
+
+// Validates the uploaded file, optionally resizes it, stores it and returns its public URL.
 async function finalize(file) {
-  if (!sniff(file.path)) { fs.unlink(file.path, () => {}); throw new Error('That file is not a valid image.'); }
-  let name = path.basename(file.path);
+  let type = sniff(file.buffer);
+  if (!type) throw new Error('That file is not a valid image.');
+  let buf = file.buffer;
   if (sharp) {
-    try {
-      const out = name.replace(/\.[^.]+$/, '') + '.webp';
-      await sharp(file.path).rotate().resize({ width: 1600, withoutEnlargement: true }).webp({ quality: 80 }).toFile(path.join(config.uploadDir, out));
-      if (out !== name) fs.unlink(file.path, () => {});
-      name = out;
-    } catch (e) { console.error('Image resize skipped:', e.message); }
+    try { buf = await sharp(buf).rotate().resize({ width: 1600, withoutEnlargement: true }).webp({ quality: 80 }).toBuffer(); type = 'image/webp'; }
+    catch (e) { console.error('Image resize skipped:', e.message); }
   }
-  return '/uploads/' + name;
+  const name = crypto.randomBytes(16).toString('hex') + ALLOWED[type];
+  return putObject(name, buf, type);
 }
 
-function removeUpload(urlPath) {
-  if (!urlPath || !urlPath.startsWith('/uploads/')) return;
-  const f = path.join(config.uploadDir, path.basename(urlPath));
-  fs.unlink(f, () => {});
+// Deletes a stored image. Never throws: a leftover file is harmless.
+async function removeUpload(url) {
+  try {
+    if (!url || !sb.url || !url.startsWith(publicPrefix())) return;
+    const name = url.slice(publicPrefix().length);
+    await fetch(`${sb.url}/storage/v1/object/${sb.bucket}`, {
+      method: 'DELETE', headers: headers({ 'Content-Type': 'application/json' }), body: JSON.stringify({ prefixes: [name] })
+    });
+  } catch (e) { console.error('Image delete failed:', e.message); }
 }
 
-module.exports = { upload, finalize, removeUpload };
+// Creates the public bucket if it does not exist yet (used by the setup scripts).
+async function ensureBucket() {
+  requireStorage();
+  const r = await fetch(`${sb.url}/storage/v1/bucket/${sb.bucket}`, { headers: headers() });
+  if (r.ok) return 'exists';
+  const c = await fetch(`${sb.url}/storage/v1/bucket`, {
+    method: 'POST', headers: headers({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ id: sb.bucket, name: sb.bucket, public: true, file_size_limit: 5 * 1024 * 1024, allowed_mime_types: Object.keys(ALLOWED) })
+  });
+  if (!c.ok) throw new Error(`Could not create storage bucket (${c.status}): ${(await c.text()).slice(0, 200)}`);
+  return 'created';
+}
+
+const storageOrigin = () => (sb.url ? new URL(sb.url).origin : '');
+
+module.exports = { upload, finalize, removeUpload, putObject, ensureBucket, sniff, storageOrigin, ALLOWED };

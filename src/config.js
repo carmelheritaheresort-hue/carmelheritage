@@ -16,8 +16,20 @@ module.exports = {
   port: Number(env.PORT) || 3000,
   siteUrl: (env.SITE_URL || 'http://localhost:3000').replace(/\/+$/, ''),
   trustProxy: env.TRUST_PROXY === '1',
-  dbPath: path.resolve(root, env.DATABASE_PATH || './data/carmel.db'),
-  uploadDir: path.resolve(root, env.UPLOAD_DIR || './data/uploads'),
+  isServerless: !!env.VERCEL,
+  // Supabase Postgres. Use the "Transaction pooler" connection string (port 6543).
+  databaseUrl: (env.DATABASE_URL || '').trim(),
+  databaseCa: (env.DATABASE_CA_CERT || '').replace(/\\n/g, '\n').trim(),
+  // Supabase Storage for uploaded images.
+  supabase: {
+    url: (env.SUPABASE_URL || '').trim().replace(/\/+$/, ''),
+    secretKey: (env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '').trim(),
+    bucket: (env.SUPABASE_BUCKET || 'uploads').trim()
+  },
+  cronSecret: (env.CRON_SECRET || '').trim(),
+  // Old local files, used only by scripts/import-from-sqlite.js.
+  legacyDbPath: path.resolve(root, env.DATABASE_PATH || './data/carmel.db'),
+  legacyUploadDir: path.resolve(root, env.UPLOAD_DIR || './data/uploads'),
   whatsappEnv: (env.WHATSAPP_NUMBER || '').replace(/\D/g, ''),
   smtp: {
     host: env.SMTP_HOST || '',

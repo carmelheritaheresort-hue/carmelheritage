@@ -1,8 +1,9 @@
 {
-  "name": "carmel-ayurveda-village",
-  "version": "1.0.0",
+  "name": "carmel-heritage",
+  "version": "2.0.0",
   "private": true,
-  "description": "Website, enquiry flow and admin area for Carmel Ayurveda Village",
+  "type": "commonjs",
+  "description": "Website, online booking, guest profiles and admin area for Carmel Heritage",
   "main": "server.js",
   "engines": {
     "node": ">=22.13"
@@ -10,8 +11,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "build": "node scripts/migrate.js",
     "migrate": "node scripts/migrate.js",
-    "create-admin": "node scripts/create-admin.js"
+    "create-admin": "node scripts/create-admin.js",
+    "import-sqlite": "node scripts/import-from-sqlite.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -22,7 +25,8 @@
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
     "multer": "^2.0.2",
-    "nodemailer": "^6.9.16"
+    "nodemailer": "^6.9.16",
+    "pg": "^8.23.1"
   },
   "optionalDependencies": {
     "sharp": "^0.33.5"

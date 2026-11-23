@@ -6,6 +6,7 @@ const { todayIST } = require('./util');
 
 const HOLD_MINUTES = 20;
 const KINDS = ['cottage', 'standard_room'];
+const BOOKING_LOCK = 727002; // serialises "check rooms then reserve" across all server instances
 // Bookings in these states take a room. Pending ones only while their hold is valid.
 const ACTIVE_SQL = `(status IN ('paid','confirmed') OR (status = 'pending_payment' AND hold_expires_at > ?))`;
 
@@ -19,17 +20,17 @@ const STATUS_LABEL = {
   expired: 'Expired (not paid)'
 };
 
-function roomTypes() {
-  const rows = db.prepare('SELECT * FROM accommodation_types WHERE approved=1 ORDER BY sort_order, id').all();
+async function roomTypes() {
+  const rows = await db.all('SELECT * FROM accommodation_types WHERE approved=1 ORDER BY sort_order, id');
   const rooms = {};
   for (const r of rows) {
+    // A type with no price cannot be booked online.
+    if (!(r.price_per_night > 0)) continue;
     rooms[r.kind] = {
       kind: r.kind, slug: r.slug, name: r.name, total: r.total_units, rate: r.price_per_night,
       maxAdults: r.max_adults, maxChildren: r.max_children, photo: r.photo, photo_alt: r.photo_alt, summary: r.summary
     };
   }
-  // A type with no price cannot be booked online.
-  for (const k of Object.keys(rooms)) if (!(rooms[k].rate > 0)) delete rooms[k];
   return rooms;
 }
 
@@ -48,12 +49,12 @@ function nightsList(ci, co) {
 }
 
 // Rooms free on every night of the stay, per type. excludeId lets an existing booking be re-checked.
-function availability(ci, co, excludeId = 0) {
-  const rooms = roomTypes();
+async function availability(ci, co, excludeId = 0, rooms = null) {
+  rooms = rooms || await roomTypes();
   const now = new Date().toISOString();
-  const bookings = db.prepare(`SELECT id, check_in, check_out, cottage_units, standard_units FROM bookings
-    WHERE check_in < ? AND check_out > ? AND id != ? AND ${ACTIVE_SQL}`).all(co, ci, excludeId, now);
-  const blocks = db.prepare('SELECT kind, start_date, end_date, units FROM room_blocks WHERE start_date < ? AND end_date > ?').all(co, ci);
+  const bookings = await db.all(`SELECT id, check_in, check_out, cottage_units, standard_units FROM bookings
+    WHERE check_in < ? AND check_out > ? AND id != ? AND ${ACTIVE_SQL}`, co, ci, excludeId, now);
+  const blocks = await db.all('SELECT kind, start_date, end_date, units FROM room_blocks WHERE start_date < ? AND end_date > ?', co, ci);
   const out = {};
   for (const kind of KINDS) {
     if (!rooms[kind]) { out[kind] = 0; continue; }
@@ -69,33 +70,33 @@ function availability(ci, co, excludeId = 0) {
   return out;
 }
 
-function newRef() {
+async function newRef() {
   const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   for (let i = 0; i < 10; i++) {
-    const bytes = crypto.randomBytes(6);
-    const ref = 'CH-' + Array.from(bytes, b => abc[b % abc.length]).join('');
-    if (!db.prepare('SELECT 1 FROM bookings WHERE ref=?').get(ref)) return ref;
+    const ref = 'CH-' + Array.from(crypto.randomBytes(6), b => abc[b % abc.length]).join('');
+    if (!(await db.get('SELECT 1 AS x FROM bookings WHERE ref=?', ref))) return ref;
   }
   throw new Error('Could not create a booking reference');
 }
 
 // Validates, re-checks availability and stores a booking that is waiting for payment.
 // Returns { ok, errors } or { ok, booking }.
-function createPending(raw, s, providerName) {
-  const rooms = roomTypes();
+async function createPending(raw, s, providerName) {
+  const rooms = await roomTypes();
   const today = todayIST();
   const pre = calc.validate(raw, { today, rooms });
   if (!pre.ok) return { ok: false, errors: pre.errors };
   const d = pre.clean;
 
-  return db.transaction(() => {
-    const avail = availability(d.check_in, d.check_out);
+  return db.tx(async () => {
+    await db.exec(`SELECT pg_advisory_xact_lock(${BOOKING_LOCK})`);
+    const avail = await availability(d.check_in, d.check_out, 0, rooms);
     const v = calc.validate(raw, { today, rooms, availability: avail });
     if (!v.ok) return { ok: false, errors: v.errors, availability: avail };
     const q = calc.quote(d, rooms, pricing(s));
     const now = new Date();
     const row = {
-      ref: newRef(),
+      ref: await newRef(),
       token: crypto.randomBytes(24).toString('hex'),
       check_in: d.check_in, check_out: d.check_out, nights: q.nights,
       cottage_units: d.cottage_units, standard_units: d.standard_units,
@@ -110,17 +111,17 @@ function createPending(raw, s, providerName) {
       created_at: now.toISOString(), updated_at: now.toISOString()
     };
     const cols = Object.keys(row);
-    const info = db.prepare(`INSERT INTO bookings (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})`).run(...cols.map(c => row[c]));
-    return { ok: true, booking: { ...row, id: Number(info.lastInsertRowid), status: 'pending_payment' } };
-  })();
+    const id = await db.insert(`INSERT INTO bookings (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})`, ...cols.map(c => row[c]));
+    return { ok: true, booking: { ...row, id, status: 'pending_payment' } };
+  });
 }
 
-function setOrder(id, orderId) {
-  db.prepare('UPDATE bookings SET provider_order_id=?, updated_at=? WHERE id=?').run(orderId, new Date().toISOString(), id);
+async function setOrder(id, orderId) {
+  await db.run('UPDATE bookings SET provider_order_id=?, updated_at=? WHERE id=?', orderId, new Date().toISOString(), id);
 }
 
-function byRef(ref) { return db.prepare('SELECT * FROM bookings WHERE ref=?').get(String(ref || '').slice(0, 20)); }
-function byOrder(orderId) { return db.prepare('SELECT * FROM bookings WHERE provider_order_id=?').get(String(orderId || '')); }
+const byRef = ref => db.get('SELECT * FROM bookings WHERE ref=?', String(ref || '').slice(0, 20));
+const byOrder = orderId => db.get('SELECT * FROM bookings WHERE provider_order_id=?', String(orderId || ''));
 
 function tokenOk(b, token) {
   if (!b || typeof token !== 'string') return false;
@@ -130,42 +131,40 @@ function tokenOk(b, token) {
 
 // Records a successful payment. Safe to call more than once (checkout callback and webhook).
 // Returns { booking, changed }.
-function markPaid(b, paymentId) {
-  return db.transaction(() => {
-    const cur = db.prepare('SELECT * FROM bookings WHERE id=?').get(b.id);
+async function markPaid(b, paymentId) {
+  return db.tx(async () => {
+    const cur = await db.get('SELECT * FROM bookings WHERE id=? FOR UPDATE', b.id);
     if (['paid', 'confirmed', 'refunded'].includes(cur.status)) return { booking: cur, changed: false };
     const now = new Date().toISOString();
     let note = cur.internal_notes;
     if (cur.status !== 'pending_payment' || cur.hold_expires_at <= now) {
       // Payment arrived after the hold ran out or after a failure. Keep the money record and flag it.
-      const avail = availability(cur.check_in, cur.check_out, cur.id);
+      const avail = await availability(cur.check_in, cur.check_out, cur.id);
       const fits = cur.cottage_units <= avail.cottage && cur.standard_units <= avail.standard_room;
       note = (note ? note + '\n' : '') + `[${now}] Payment received after the hold expired. ` +
         (fits ? 'Rooms were still free.' : 'CHECK AVAILABILITY: the rooms may already be taken. Refund if you cannot accommodate.');
     }
-    db.prepare(`UPDATE bookings SET status='paid', provider_payment_id=?, paid_at=?, internal_notes=?, updated_at=? WHERE id=?`)
-      .run(String(paymentId || '').slice(0, 100), now, note, now, cur.id);
-    return { booking: db.prepare('SELECT * FROM bookings WHERE id=?').get(cur.id), changed: true };
-  })();
+    await db.run(`UPDATE bookings SET status='paid', provider_payment_id=?, paid_at=?, internal_notes=?, updated_at=? WHERE id=?`,
+      String(paymentId || '').slice(0, 100), now, note, now, cur.id);
+    return { booking: await db.get('SELECT * FROM bookings WHERE id=?', cur.id), changed: true };
+  });
 }
 
-function addNote(id, text) {
+async function addNote(id, text) {
   const now = new Date().toISOString();
-  db.prepare(`UPDATE bookings SET internal_notes = trim(internal_notes || ?), updated_at=? WHERE id=?`)
-    .run(`\n[${now}] ${String(text).slice(0, 500)}`, now, id);
+  await db.run(`UPDATE bookings SET internal_notes = trim(internal_notes || ?), updated_at=? WHERE id=?`, `\n[${now}] ${String(text).slice(0, 500)}`, now, id);
 }
 
 // Guest closed the payment window without paying: release the rooms now instead of waiting for the hold.
-function markFailed(b, reason) {
-  const now = new Date().toISOString();
-  const r = db.prepare(`UPDATE bookings SET status='failed', updated_at=? WHERE id=? AND status='pending_payment'`).run(now, b.id);
-  if (r.changes && reason) addNote(b.id, reason);
+async function markFailed(b, reason) {
+  const r = await db.run(`UPDATE bookings SET status='failed', updated_at=? WHERE id=? AND status='pending_payment'`, new Date().toISOString(), b.id);
+  if (r.changes && reason) await addNote(b.id, reason);
 }
 
 // Releases rooms held by unpaid bookings once the hold has run out.
-function expireHolds() {
+async function expireHolds() {
   const now = new Date().toISOString();
-  return db.prepare(`UPDATE bookings SET status='expired', updated_at=? WHERE status='pending_payment' AND hold_expires_at <= ?`).run(now, now).changes;
+  return (await db.run(`UPDATE bookings SET status='expired', updated_at=? WHERE status='pending_payment' AND hold_expires_at <= ?`, now, now)).changes;
 }
 
 function publicView(b) {
