@@ -49,10 +49,8 @@ function bookingLines(b) {
     `Reference: ${b.ref}`,
     `Check-in: ${b.check_in}`,
     `Check-out: ${b.check_out} (${b.nights} night${b.nights === 1 ? '' : 's'})`,
-    b.cottage_units ? `Cottages: ${b.cottage_units} x ${inr(b.cottage_rate * 100)} a night` : null,
-    b.standard_units ? `Standard rooms: ${b.standard_units} x ${inr(b.standard_rate * 100)} a night` : null,
-    b.extra_adults ? `Extra adults: ${b.extra_adults} x ${inr(b.extra_adult_rate * 100)} a night` : null,
-    b.extra_children ? `Children aged 7 to 12: ${b.extra_children} x ${inr(b.extra_child_rate * 100)} a night` : null,
+    ...require('./booking').publicView(b).rooms.map(r =>
+      `${r.label}: ${r.units} x ${inr(r.rate * 100)} a night x ${r.nights} night${r.nights === 1 ? '' : 's'} = ${inr(r.amount)}`),
     `Guests: ${require('./booking').guestText(b)}`,
     `Subtotal: ${inr(b.subtotal_paise)}`,
     `GST (${b.gst_percent}%): ${inr(b.gst_paise)}`,

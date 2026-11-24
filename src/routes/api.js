@@ -100,7 +100,7 @@ router.get('/availability', availLimiter, wrap(async (req, res) => {
   try {
     await booking.expireHolds();
     res.set('Cache-Control', 'no-store');
-    res.json({ ok: true, availability: await booking.availability(ci, co) });
+    res.json({ ok: true, availability: await booking.availability(ci, co), rates: await booking.nightRates(ci, co) });
   } catch (e) {
     console.error('Availability failed:', e.message);
     res.status(503).json({ ok: false, error: 'Availability is not available right now. Please call the Centre.' });
@@ -115,7 +115,7 @@ router.post('/bookings', bookingLimiter, express.json({ limit: '10kb' }), fetchO
 
   await booking.expireHolds();
   const mode = payments.bookingMode();
-  const result = await booking.createPending(b0, s, mode);
+  const result = await booking.createPending(b0, s, mode); // prices come from the database, never from the browser
   if (!result.ok) return res.status(400).json({ ok: false, errors: result.errors, availability: result.availability });
   const b = result.booking;
   await guests.attach('bookings', b, mode === 'request' ? 'booking request' : 'online booking');

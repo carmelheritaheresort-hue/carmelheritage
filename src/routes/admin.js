@@ -10,6 +10,7 @@ const { upload, finalize, removeUpload } = require('../uploads');
 const { wrap, fmtDateTime, csvCell, isHttpUrl, todayIST } = require('../util');
 const booking = require('../booking');
 const guests = require('../guests');
+const inventory = require('../inventory');
 const calc = require('../../public/js/booking-calc.js');
 
 const router = express.Router();
@@ -317,6 +318,35 @@ r.post('/bookings/blocks', auth.allow(...enq), async (req, res) => {
   await db.run('INSERT INTO room_blocks(kind,start_date,end_date,units,note,created_at) VALUES (?,?,?,?,?,?)',
     f.kind, f.start_date, calc.addDays(f.last_night, 1), f.units, f.note, new Date().toISOString());
   res.redirect('/admin/bookings/blocks?ok=1');
+});
+
+// ---- Inventory calendar ---------------------------------------------------
+const MSG = { block: 'room-nights blocked', open: 'room-nights opened', rate: 'nights given the new price', reset: 'nights set back to the normal price' };
+
+async function inventoryPage(req, res, extra = {}) {
+  const first = inventory.monthStart(req.query.month) || (extra.month ? extra.month : todayIST().slice(0, 7) + '-01');
+  const day = calc.isDate(req.query.day || '') ? req.query.day : '';
+  res.render('admin/inventory', {
+    m: await inventory.month(first), day, dayInfo: day ? await inventory.night(day) : null,
+    today: todayIST(), LABEL: booking.STATUS_LABEL, rupees: booking.rupees,
+    canPrice: req.user.role === 'admin', form: {}, error: '', done: '', ...extra
+  });
+}
+
+r.get('/inventory', auth.allow(...enq), (req, res) => inventoryPage(req, res, {
+  done: /^\d{1,5}$/.test(req.query.n || '') && MSG[req.query.a] ? `${req.query.n} ${MSG[req.query.a]}.` : ''
+}));
+
+r.post('/inventory', auth.allow(...enq), async (req, res) => {
+  const rooms = await booking.roomTypes();
+  const { f, error } = inventory.parse(req.body, rooms, todayIST());
+  const month = inventory.monthStart(String(req.body.month || '')) || todayIST().slice(0, 7) + '-01';
+  if (!error && (f.action === 'rate' || f.action === 'reset') && req.user.role !== 'admin') {
+    return res.status(403).render('admin/message', { title: 'Not allowed', message: 'Only an admin can change room prices.' });
+  }
+  if (error) { res.status(400); return inventoryPage(req, res, { month, form: req.body, error }); }
+  const n = await inventory.apply(f, req.user.name);
+  res.redirect(`/admin/inventory?month=${month.slice(0, 7)}&a=${f.action}&n=${n}`);
 });
 
 r.post('/bookings/blocks/:id/delete', auth.allow(...enq), async (req, res) => {

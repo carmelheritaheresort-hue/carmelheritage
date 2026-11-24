@@ -51,7 +51,7 @@
         <table class="sum-table wide">
           <tbody>
             <% b.rooms.forEach(function (r) { %>
-              <tr><th scope="row"><%= r.units %> <%= r.label.toLowerCase() %> &times; <%= b.nights %> night<%= b.nights === 1 ? '' : 's' %> @ <%= rupees(r.rate * 100) %></th><td><%= rupees(r.amount) %></td></tr>
+              <tr><th scope="row"><%= r.units %> <%= r.label.toLowerCase() %> &times; <%= r.nights %> night<%= r.nights === 1 ? '' : 's' %> @ <%= rupees(r.rate * 100) %></th><td><%= rupees(r.amount) %></td></tr>
             <% }) %>
           </tbody>
           <tfoot>

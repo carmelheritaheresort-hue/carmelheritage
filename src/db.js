@@ -2,7 +2,6 @@
 const { AsyncLocalStorage } = require('async_hooks');
 const { Pool, types } = require('pg');
 const config = require('./config');
-const inventory = require('./inventory');
 
 // COUNT/SUM come back as strings by default; this app's numbers are small enough for JS numbers.
 types.setTypeParser(20, v => parseInt(v, 10));   // int8
@@ -92,7 +91,7 @@ const db = {
 
 // Add new migrations to the END of this list. Never edit a migration that has shipped.
 const TABLES = ['settings', 'users', 'sessions', 'accommodation_types', 'treatments', 'facilities', 'gallery', 'faqs', 'testimonials',
-  'management', 'packages', 'guests', 'enquiries', 'bookings', 'room_blocks', 'schema_migrations'];
+  'management', 'packages', 'guests', 'enquiries', 'bookings', 'room_blocks', 'room_rates', 'schema_migrations'];
 
 const migrations = [
   {
@@ -389,6 +388,24 @@ ALTER TABLE bookings ADD COLUMN extras_paise INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
 ALTER TABLE bookings ADD CONSTRAINT bookings_status_check
   CHECK (status IN ('pending_payment','requested','paid','confirmed','cancelled','refunded','failed','expired'));
+`
+  },
+  {
+    id: 5,
+    name: 'date-specific room prices',
+    // A row overrides the room type's normal price for one night. Extra adult/child charges are unchanged.
+    sql: `
+CREATE TABLE room_rates (
+  kind TEXT NOT NULL CHECK (kind IN ('cottage','standard_room')),
+  night TEXT NOT NULL,
+  rate INTEGER NOT NULL CHECK (rate > 0),
+  note TEXT NOT NULL DEFAULT '',
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (kind, night)
+);
+ALTER TABLE room_rates ENABLE ROW LEVEL SECURITY;
+-- Room lines as charged (one line per price), so bookings with mixed nightly prices show correctly.
+ALTER TABLE bookings ADD COLUMN rate_lines TEXT NOT NULL DEFAULT '';
 `
   }
 ];

@@ -13,7 +13,7 @@
   <dt>Check-in</dt><dd><%= b.check_in %></dd>
   <dt>Check-out</dt><dd><%= b.check_out %> (<%= b.nights %> night<%= b.nights === 1 ? '' : 's' %>)</dd>
   <dt>Guests</dt><dd><%= b.guestText %></dd>
-  <% b.rooms.forEach(function (r) { %><dt><%= r.label %></dt><dd><%= r.units %> &times; <%= rupees(r.rate * 100) %> a night &times; <%= b.nights %> = <%= rupees(r.amount) %></dd><% }) %>
+  <% b.rooms.forEach(function (r) { %><dt><%= r.label %></dt><dd><%= r.units %> &times; <%= rupees(r.rate * 100) %> a night &times; <%= r.nights %> night<%= r.nights === 1 ? '' : 's' %> = <%= rupees(r.amount) %></dd><% }) %>
   <dt>Subtotal</dt><dd><%= rupees(b.subtotal_paise) %></dd>
   <dt>GST (<%= b.gst_percent %>%)</dt><dd><%= rupees(b.gst_paise) %></dd>
   <dt>Total</dt><dd><strong><%= rupees(b.total_paise) %></strong></dd>

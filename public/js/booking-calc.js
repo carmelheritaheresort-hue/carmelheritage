@@ -61,14 +61,27 @@
     };
   }
 
+  // Room lines for one room type: nights at the same price are grouped into one line.
+  // special: { 'YYYY-MM-DD': rate } prices set for particular nights in Admin > Inventory.
+  function roomLines(kind, units, baseRate, sel, special) {
+    if (!units) return [];
+    var byRate = {}, order = [];
+    for (var d = sel.check_in; d < sel.check_out; d = addDays(d, 1)) {
+      var r = special && special[d] > 0 ? special[d] : baseRate;
+      if (!byRate[r]) { byRate[r] = 0; order.push(r); }
+      byRate[r]++;
+    }
+    return order.map(function (r) { return { kind: kind, units: units, rate: r, nights: byRate[r], amount: units * r * byRate[r] * 100 }; });
+  }
+
   // rooms: { cottage: {...}, standard_room: {...} }   pricing: { gstPercent, payMode, advancePercent }
-  function quote(sel, rooms, pricing) {
+  // nightRates (optional): { cottage: { date: rate }, standard_room: { date: rate } } date-specific room prices.
+  function quote(sel, rooms, pricing, nightRates) {
     var nights = days(sel.check_in, sel.check_out);
     var c = sel.cottage_units || 0, s = sel.standard_units || 0;
     var C = room(rooms, 'cottage'), S = room(rooms, 'standard_room');
-    var lines = [];
-    if (c) lines.push({ kind: 'cottage', units: c, rate: C.rate, nights: nights, amount: c * C.rate * nights * 100 });
-    if (s) lines.push({ kind: 'standard_room', units: s, rate: S.rate, nights: nights, amount: s * S.rate * nights * 100 });
+    var nr = nightRates || {};
+    var lines = roomLines('cottage', c, C.rate, sel, nr.cottage).concat(roomLines('standard_room', s, S.rate, sel, nr.standard_room));
     var al = allocate(sel, rooms);
     var extraAdults = 0, extraChildren = 0, extraAdultRate = 0, extraChildRate = 0;
     if (!al.error) {

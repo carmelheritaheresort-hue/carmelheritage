@@ -92,7 +92,7 @@ if (require.main === module) {
     setInterval(run, 24 * 3600 * 1000).unref();
     setInterval(() => require('./src/booking').expireHolds().catch(e => console.error('Hold expiry failed:', e.message)), 5 * 60 * 1000).unref();
     const p = payments.provider();
-    console.log(p === 'razorpay' ? 'Payments: Razorpay' : p === 'dev' ? 'Payments: DEVELOPMENT simulation (no Razorpay keys set)' : 'Payments: not configured, online booking is closed');
+    console.log(p === 'razorpay' ? 'Payments: Razorpay' : p === 'dev' ? 'Payments: DEVELOPMENT simulation (no Razorpay keys set)' : 'Payments: not configured, guests send booking requests');
     app.listen(config.port, () => console.log(`Carmel Heritage running at ${config.siteUrl} (port ${config.port})`));
   })().catch(e => { console.error('Startup failed:', e.message); process.exit(1); });
 }

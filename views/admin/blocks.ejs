@@ -1,6 +1,7 @@
 <%- include('_top', { title: 'Block rooms' }) %>
 <p><a href="/admin/bookings">&larr; Bookings</a></p>
 <h1>Block rooms</h1>
+<p>The <a href="/admin/inventory">inventory calendar</a> shows free rooms night by night and lets you block, open and price dates. This page lists every block.</p>
 <p class="note">Online availability counts paid and confirmed website bookings. Add a block here for every booking taken by phone, WhatsApp or walk-in, and for rooms closed for maintenance, so the website does not sell the same room twice.</p>
 <% if (ok) { %><p class="ok" role="status">Block added.</p><% } %>
 <% if (error) { %><div class="error" role="alert"><p><%= error %></p></div><% } %>

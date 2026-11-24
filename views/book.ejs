@@ -89,6 +89,7 @@
                 <div class="room-pick-body">
                   <h3 id="rp-<%= k[0] %>"><%= r.name %></h3>
                   <p class="room-price"><strong><%= rupees(r.rate * 100) %></strong> <span>per <%= k[0] === 'cottage' ? 'cottage' : 'room' %> per night<%= gstLabel %></span></p>
+                  <% if (locals.specialRates) { %><p class="small rate-vary">The price can be different on some dates. Your booking summary shows the price for your dates.</p><% } %>
                   <%- include('partials/room-rules', { r: r }) %>
                   <p class="room-avail" data-avail-for="<%= k[0] %>"><%= r.total %> in total</p>
                   <div class="stepper" role="group" aria-labelledby="rp-<%= k[0] %>">

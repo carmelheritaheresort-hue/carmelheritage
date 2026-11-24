@@ -16,7 +16,7 @@
   <strong>Carmel admin</strong>
   <nav aria-label="Admin">
     <a href="/admin">Dashboard</a>
-    <% if (role === 'admin' || role === 'staff') { %><a href="/admin/bookings">Bookings</a><a href="/admin/guests">Guests</a><a href="/admin/enquiries">Enquiries</a><% } %>
+    <% if (role === 'admin' || role === 'staff') { %><a href="/admin/bookings">Bookings</a><a href="/admin/inventory">Inventory</a><a href="/admin/guests">Guests</a><a href="/admin/enquiries">Enquiries</a><% } %>
     <% if (role === 'admin' || role === 'editor') { %>
       <a href="/admin/content/accommodation">Accommodation</a>
       <a href="/admin/content/packages">Packages</a>

@@ -15,6 +15,7 @@
   var el = form.elements;
   var avail = null;       // { cottage, standard_room } for the chosen dates
   var availKey = '';
+  var nightRates = null;  // date-specific room prices for the chosen dates, from the server
   var busy = false;
   var UNIT_FIELD = { cottage: 'cottage_units', standard_room: 'standard_units' };
 
@@ -83,7 +84,7 @@
   function checkAvailability() {
     clearTimeout(timer);
     if (!datesValid()) {
-      avail = null; availKey = '';
+      avail = null; availKey = ''; nightRates = null;
       statusEl.textContent = el.check_in.value && el.check_out.value && el.check_out.value <= el.check_in.value
         ? 'Check-out must be after check-in.' : 'Choose your dates to see which rooms are free.';
       applyAvailability();
@@ -97,7 +98,7 @@
         .then(function (r) { return r.json(); })
         .then(function (j) {
           if (!j.ok) throw new Error(j.error || 'failed');
-          avail = j.availability; availKey = key;
+          avail = j.availability; availKey = key; nightRates = j.rates || null;
           var n = C.days(el.check_in.value, el.check_out.value);
           var anyFree = Object.keys(rooms).some(function (k) { return avail[k] > 0; });
           statusEl.textContent = anyFree
@@ -107,7 +108,7 @@
           preselect();
         })
         .catch(function () {
-          avail = null; availKey = '';
+          avail = null; availKey = ''; nightRates = null;
           statusEl.textContent = 'We could not check availability just now. Please try again, or contact the Centre.';
           applyAvailability();
         });
@@ -222,11 +223,12 @@
     var hasRooms = sel.cottage_units + sel.standard_units > 0;
     var fit = fitMessage(sel);
     if (fitEl) { fitEl.textContent = fit; fitEl.hidden = !fit; }
-    var ok = datesValid() && hasRooms && !fit;
+    // Prices are shown only once the server has sent availability and prices for these exact dates.
+    var ok = datesValid() && hasRooms && !fit && availKey === el.check_in.value + '_' + el.check_out.value;
     $('[data-summary-empty]').hidden = ok || !!fit;
     $('[data-summary-body]').hidden = !ok;
     if (!ok) { payBtn.textContent = isRequest ? 'Send booking request' : 'Continue to payment'; return; }
-    var q = C.quote(sel, rooms, pricing);
+    var q = C.quote(sel, rooms, pricing, nightRates);
     $('[data-sum-dates]').textContent = fmt(sel.check_in) + ' to ' + fmt(sel.check_out) + ' \u00B7 ' + plural(q.nights, 'night', 'nights');
     var tb = $('[data-sum-lines]');
     tb.textContent = '';

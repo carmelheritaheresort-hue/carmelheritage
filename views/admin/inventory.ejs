@@ -1,0 +1,115 @@
+<%- include('_top', { title: 'Inventory' }) %>
+<%
+  const KN = { cottage: 'Cottages', standard_room: 'Standard rooms' };
+  const kinds = Object.keys(m.rooms).filter(function (k) { return KN[k]; });
+  const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const monthName = new Date(m.first + 'T00:00:00Z').toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const mq = m.first.slice(0, 7);
+  const v = function (k, d) { return form && form[k] != null ? form[k] : d; };
+  const wds = [].concat((form && form.weekdays) || []).map(String);
+%>
+<h1>Inventory calendar</h1>
+<p class="note">Each night shows how many rooms are <strong>free</strong> on the website, and why the others are taken: <strong>booked</strong> (paid or confirmed), <strong>waiting</strong> (booking requests and unpaid bookings that still hold rooms) and <strong>blocked</strong> by you. Block rooms for every phone, WhatsApp or walk-in booking and for maintenance, so the website does not sell the same room twice.</p>
+<% if (done) { %><p class="ok" role="status"><%= done %></p><% } %>
+<% if (error) { %><div class="error" role="alert"><p><%= error %></p></div><% } %>
+
+<section class="inv-form-box" aria-labelledby="chg-h">
+  <h2 id="chg-h">Change nights</h2>
+  <p class="help">Normal prices: <%= kinds.map(function (k) { return KN[k].toLowerCase() + ' ' + rupees(m.rooms[k].rate * 100); }).join(', ') %> a night (change them under Accommodation). Tip: click a date in the calendar to fill in the first night, then another date for the last night.</p>
+  <form method="post" action="/admin/inventory" class="inv-form" data-inv-form>
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <input type="hidden" name="month" value="<%= mq %>">
+    <fieldset class="inv-actions"><legend>What to do</legend>
+      <label><input type="radio" name="action" value="block"<%= v('action', 'block') === 'block' ? ' checked' : '' %>> Block rooms</label>
+      <label><input type="radio" name="action" value="open"<%= v('action') === 'open' ? ' checked' : '' %>> Open blocked rooms</label>
+      <% if (canPrice) { %>
+      <label><input type="radio" name="action" value="rate"<%= v('action') === 'rate' ? ' checked' : '' %>> Set a special price</label>
+      <label><input type="radio" name="action" value="reset"<%= v('action') === 'reset' ? ' checked' : '' %>> Back to normal price</label>
+      <% } %>
+    </fieldset>
+    <div class="inv-grid">
+      <div class="field"><label for="inv-kind">Room type</label>
+        <select id="inv-kind" name="kind">
+          <% kinds.forEach(function (k) { %><option value="<%= k %>"<%= v('kind') === k ? ' selected' : '' %>><%= KN[k] %> (<%= m.rooms[k].total %>)</option><% }) %>
+          <option value="both"<%= v('kind') === 'both' ? ' selected' : '' %>>Both types</option>
+        </select></div>
+      <div class="field"><label for="inv-from">First night</label><input id="inv-from" name="from" type="date" min="<%= today %>" value="<%= v('from', '') %>" required></div>
+      <div class="field"><label for="inv-to">Last night</label><input id="inv-to" name="to" type="date" min="<%= today %>" value="<%= v('to', '') %>" required></div>
+      <div class="field" data-show-for="block"><label for="inv-units">Rooms to block</label><input id="inv-units" name="units" type="number" min="1" max="20" value="<%= v('units', 1) %>"></div>
+      <% if (canPrice) { %>
+      <div class="field" data-show-for="rate"><label for="inv-rate">Price per night (₹, before GST)</label><input id="inv-rate" name="rate" type="text" inputmode="numeric" value="<%= v('rate', '') %>" placeholder="e.g. 5500"></div>
+      <% } %>
+      <div class="field" data-show-for="block rate"><label for="inv-note">Note <span class="opt">(optional)</span></label><input id="inv-note" name="note" maxlength="300" value="<%= v('note', '') %>" placeholder="e.g. Phone booking, Mr Nair / Onam"></div>
+    </div>
+    <fieldset class="inv-wd"><legend>Only on these days <span class="opt">(leave all unticked for every night)</span></legend>
+      <% [1, 2, 3, 4, 5, 6, 0].forEach(function (i) { %><label><input type="checkbox" name="weekdays" value="<%= i %>"<%= wds.includes(String(i)) ? ' checked' : '' %>> <%= WD[i] %></label><% }) %>
+    </fieldset>
+    <p class="help" data-show-for="rate">A special price replaces the normal room price for those nights only. Extra adult and child charges and GST stay the same. Bookings already made keep the price they were given.</p>
+    <p class="help" data-show-for="open">Opening removes your blocks on those nights. It does not cancel website bookings; do that under Bookings.</p>
+    <button class="btn" type="submit">Apply</button>
+  </form>
+</section>
+
+<nav class="inv-nav" aria-label="Month">
+  <a class="btn-link" href="/admin/inventory?month=<%= m.prev.slice(0, 7) %>">&larr; <span class="sr-only">Previous month</span><%= new Date(m.prev + 'T00:00:00Z').toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }) %></a>
+  <h2><%= monthName %></h2>
+  <a class="btn-link" href="/admin/inventory?month=<%= m.next.slice(0, 7) %>"><%= new Date(m.next + 'T00:00:00Z').toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' }) %> <span class="sr-only">Next month</span>&rarr;</a>
+  <a class="btn-link" href="/admin/inventory">This month</a>
+</nav>
+<p class="inv-legend"><span class="lg lg-free">Free</span> <span class="lg lg-low">1–2 left</span> <span class="lg lg-full">Full</span> <span class="lg lg-special">Special price</span></p>
+
+<div class="table-wrap">
+<table class="inv-table">
+  <thead>
+    <tr><th scope="col" rowspan="2">Night</th><% kinds.forEach(function (k) { %><th scope="colgroup" colspan="2"><%= KN[k] %> (<%= m.rooms[k].total %>)</th><% }) %></tr>
+    <tr><% kinds.forEach(function () { %><th scope="col">Rooms</th><th scope="col">Price</th><% }) %></tr>
+  </thead>
+  <tbody>
+  <% m.days.forEach(function (d) { const past = d.date < today; %>
+    <tr class="<%= past ? 'past' : '' %><%= d.weekday === 0 || d.weekday === 6 ? ' wkend' : '' %><%= d.date === day ? ' on' : '' %>">
+      <th scope="row">
+        <% if (!past) { %><button type="button" class="inv-date" data-inv-date="<%= d.date %>" title="Use this date in the form"><%= WD[d.weekday] %> <%= Number(d.date.slice(8)) %></button><% } else { %><%= WD[d.weekday] %> <%= Number(d.date.slice(8)) %><% } %>
+        <a class="inv-who" href="/admin/inventory?month=<%= mq %>&amp;day=<%= d.date %>#night">who</a>
+      </th>
+      <% kinds.forEach(function (k) { const c = d.kinds[k]; const cls = c.over ? 'full over' : c.free === 0 ? 'full' : c.free <= 2 ? 'low' : 'free'; %>
+      <td class="inv-rooms <%= cls %>">
+        <strong><%= c.free %></strong> free<% if (c.over) { %> <span class="inv-over">overbooked</span><% } %>
+        <small><%= c.booked %> booked<%= c.waiting ? ' · ' + c.waiting + ' waiting' : '' %><%= c.blocked ? ' · ' + c.blocked + ' blocked' : '' %></small>
+        <% if (c.blockNotes.length) { %><small class="inv-note"><%= c.blockNotes.join('; ') %></small><% } %>
+      </td>
+      <td class="inv-rate<%= c.special ? ' special' : '' %>"><%= rupees(c.rate * 100) %><% if (c.rateNote) { %><small class="inv-note"><%= c.rateNote %></small><% } %></td>
+      <% }) %>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+</div>
+
+<% if (dayInfo) { %>
+<section id="night" class="inv-night" aria-labelledby="night-h">
+  <h2 id="night-h">Night of <%= new Date(day + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) %></h2>
+  <h3>Website bookings</h3>
+  <% if (dayInfo.bookings.length) { %>
+  <table>
+    <thead><tr><th scope="col">Reference</th><th scope="col">Guest</th><th scope="col">Stay</th><th scope="col">Rooms</th><th scope="col">Status</th></tr></thead>
+    <tbody>
+    <% dayInfo.bookings.forEach(function (b) { %>
+      <tr><td><a href="/admin/bookings/<%= b.id %>"><%= b.ref %></a></td><td><%= b.name %><br><small><%= b.phone %></small></td><td><%= b.check_in %> to <%= b.check_out %></td>
+        <td><%= [b.cottage_units ? b.cottage_units + ' cottage' : '', b.standard_units ? b.standard_units + ' standard' : ''].filter(Boolean).join(', ') %></td>
+        <td><span class="badge b-<%= b.status %>"><%= LABEL[b.status] %></span></td></tr>
+    <% }) %>
+    </tbody>
+  </table>
+  <% } else { %><p>No website bookings this night.</p><% } %>
+  <h3>Your blocks</h3>
+  <% if (dayInfo.blocks.length) { %>
+  <ul>
+    <% dayInfo.blocks.forEach(function (k) { const last = new Date(Date.parse(k.end_date + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10); %>
+      <li><%= k.units %> <%= k.kind === 'cottage' ? 'cottage' : 'standard room' %><%= k.units === 1 ? '' : 's' %>, nights <%= k.start_date %> to <%= last %><%= k.note ? ': ' + k.note : '' %></li>
+    <% }) %>
+  </ul>
+  <% } else { %><p>No blocks this night.</p><% } %>
+</section>
+<% } %>
+<script src="/js/admin-inventory.js" defer></script>
+<%- include('_bottom') %>

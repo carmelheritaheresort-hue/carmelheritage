@@ -5,6 +5,7 @@ const content = require('../content');
 const { renderText, todayIST, wrap } = require('../util');
 const booking = require('../booking');
 const payments = require('../payments');
+const inventory = require('../inventory');
 
 const router = express.Router();
 
@@ -214,6 +215,7 @@ get('/book', async (req, res) => {
     crumbs: [{ name: 'Book', path: '/book' }]
   }, {
     open, provider, rooms, pre, roomPhotos,
+    specialRates: await content.safe(() => inventory.hasSpecialRates(todayIST()), false),
     requestHoldHours: booking.requestHoldHours(s),
     pricing: booking.pricing(s),
     today: todayIST(),

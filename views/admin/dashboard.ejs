@@ -6,7 +6,7 @@
   <h2>Bookings</h2>
   <% if (requestCount) { %><p class="warn" role="note"><strong><%= requestCount %></strong> booking request<%= requestCount === 1 ? '' : 's' %> waiting for you to confirm or cancel. Call the guest, then set the status. <a href="/admin/bookings?status=requested">Review now</a></p><% } %>
   <% if (paidCount) { %><p class="warn" role="note"><strong><%= paidCount %></strong> paid booking<%= paidCount === 1 ? '' : 's' %> waiting for you to confirm. <a href="/admin/bookings?status=paid">Review now</a></p><% } else if (!requestCount) { %><p>No bookings are waiting for confirmation.</p><% } %>
-  <p><%= upcoming %> confirmed or paid booking<%= upcoming === 1 ? '' : 's' %> arriving in the next 30 days. <a href="/admin/bookings">All bookings</a> &middot; <a href="/admin/bookings/blocks">Block rooms</a></p>
+  <p><%= upcoming %> confirmed or paid booking<%= upcoming === 1 ? '' : 's' %> arriving in the next 30 days. <a href="/admin/bookings">All bookings</a> &middot; <a href="/admin/inventory">Inventory calendar (block rooms, prices)</a></p>
 </section>
 <section>
   <h2>Enquiries</h2>

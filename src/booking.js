@@ -77,6 +77,15 @@ async function availability(ci, co, excludeId = 0, rooms = null) {
   return out;
 }
 
+// Date-specific room prices for the nights from ci up to (not including) co: { cottage: { date: rate }, standard_room: {...} }.
+async function nightRates(ci, co) {
+  const out = { cottage: {}, standard_room: {} };
+  for (const r of await db.all('SELECT kind, night, rate FROM room_rates WHERE night >= ? AND night < ?', ci, co)) {
+    if (out[r.kind]) out[r.kind][r.night] = r.rate;
+  }
+  return out;
+}
+
 async function newRef() {
   const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   for (let i = 0; i < 10; i++) {
@@ -102,7 +111,9 @@ async function createPending(raw, s, providerName) {
     const avail = await availability(d.check_in, d.check_out, 0, rooms);
     const v = calc.validate(raw, { today, rooms, availability: avail });
     if (!v.ok) return { ok: false, errors: v.errors, availability: avail };
-    const q = calc.quote(d, rooms, pricing(s));
+    const q = calc.quote(d, rooms, pricing(s), await nightRates(d.check_in, d.check_out));
+    const roomLines = q.lines.filter(l => l.kind === 'cottage' || l.kind === 'standard_room')
+      .map(l => ({ kind: l.kind, units: l.units, rate: l.rate, nights: l.nights, amount: l.amount }));
     const now = new Date();
     const row = {
       ref: await newRef(),
@@ -116,6 +127,7 @@ async function createPending(raw, s, providerName) {
       extra_adults: q.extraAdults, extra_children: q.extraChildren,
       extra_adult_rate: q.extraAdultRate, extra_child_rate: q.extraChildRate, extras_paise: q.extras,
       gst_percent: q.gstPercent,
+      rate_lines: JSON.stringify(roomLines),
       subtotal_paise: q.subtotal, gst_paise: q.gst, total_paise: q.total, pay_now_paise: isRequest ? 0 : q.payNow,
       provider: providerName,
       status: isRequest ? 'requested' : 'pending_payment',
@@ -185,12 +197,24 @@ async function stillFits(b) {
   return b.cottage_units <= avail.cottage && b.standard_units <= avail.standard_room;
 }
 
+function storedRoomLines(b) {
+  try { const l = JSON.parse(b.rate_lines || '[]'); return Array.isArray(l) ? l : []; } catch { return []; }
+}
+
+// Each line has its own number of nights, because a stay can have nights at different prices.
 function publicView(b) {
   const rooms = [];
-  if (b.cottage_units) rooms.push({ label: b.cottage_units === 1 ? 'Cottage' : 'Cottages', units: b.cottage_units, rate: b.cottage_rate, amount: b.cottage_units * b.cottage_rate * b.nights * 100 });
-  if (b.standard_units) rooms.push({ label: b.standard_units === 1 ? 'Standard room' : 'Standard rooms', units: b.standard_units, rate: b.standard_rate, amount: b.standard_units * b.standard_rate * b.nights * 100 });
-  if (b.extra_adults) rooms.push({ label: b.extra_adults === 1 ? 'Extra adult' : 'Extra adults', units: b.extra_adults, rate: b.extra_adult_rate, amount: b.extra_adults * b.extra_adult_rate * b.nights * 100 });
-  if (b.extra_children) rooms.push({ label: b.extra_children === 1 ? 'Child aged 7 to 12' : 'Children aged 7 to 12', units: b.extra_children, rate: b.extra_child_rate, amount: b.extra_children * b.extra_child_rate * b.nights * 100 });
+  const label = (kind, n) => kind === 'cottage' ? (n === 1 ? 'Cottage' : 'Cottages') : (n === 1 ? 'Standard room' : 'Standard rooms');
+  const stored = storedRoomLines(b);
+  if (stored.length) {
+    for (const l of stored) rooms.push({ label: label(l.kind, l.units), units: l.units, rate: l.rate, nights: l.nights, amount: l.amount });
+  } else {
+    // Bookings made before date-specific prices existed: one price for every night.
+    if (b.cottage_units) rooms.push({ label: label('cottage', b.cottage_units), units: b.cottage_units, rate: b.cottage_rate, nights: b.nights, amount: b.cottage_units * b.cottage_rate * b.nights * 100 });
+    if (b.standard_units) rooms.push({ label: label('standard_room', b.standard_units), units: b.standard_units, rate: b.standard_rate, nights: b.nights, amount: b.standard_units * b.standard_rate * b.nights * 100 });
+  }
+  if (b.extra_adults) rooms.push({ label: b.extra_adults === 1 ? 'Extra adult' : 'Extra adults', units: b.extra_adults, rate: b.extra_adult_rate, nights: b.nights, amount: b.extra_adults * b.extra_adult_rate * b.nights * 100 });
+  if (b.extra_children) rooms.push({ label: b.extra_children === 1 ? 'Child aged 7 to 12' : 'Children aged 7 to 12', units: b.extra_children, rate: b.extra_child_rate, nights: b.nights, amount: b.extra_children * b.extra_child_rate * b.nights * 100 });
   return { ...b, rooms, guestText: guestText(b), balance_paise: b.total_paise - b.pay_now_paise, statusLabel: STATUS_LABEL[b.status] || b.status };
 }
 
@@ -206,6 +230,6 @@ function guestText(b) {
 }
 
 module.exports = {
-  HOLD_MINUTES, STATUS_LABEL, requestHoldHours, stillFits, roomTypes, pricing, availability, createPending, setOrder,
+  HOLD_MINUTES, STATUS_LABEL, ACTIVE_SQL, KINDS, requestHoldHours, stillFits, nightRates, roomTypes, pricing, availability, createPending, setOrder,
   byRef, byOrder, tokenOk, markPaid, markFailed, addNote, expireHolds, publicView, guestText, rupees: calc.rupees
 };
