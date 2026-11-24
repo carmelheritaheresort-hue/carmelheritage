@@ -3,7 +3,7 @@
 <%
   const kinds = [['cottage', 'cottage_units', 'cottage'], ['standard_room', 'standard_units', 'standard']];
   const roomData = {};
-  Object.keys(rooms).forEach(function (k) { const r = rooms[k]; roomData[k] = { rate: r.rate, maxAdults: r.maxAdults, maxChildren: r.maxChildren, total: r.total, name: r.name }; });
+  Object.keys(rooms).forEach(function (k) { const r = rooms[k]; roomData[k] = { rate: r.rate, maxGuests: r.maxGuests, baseAdults: r.baseAdults, extraAdult: r.extraAdult, extraChild: r.extraChild, total: r.total, name: r.name }; });
   const gstLabel = pricing.gstPercent ? ' + ' + pricing.gstPercent + '% GST' : '';
 %>
 <main id="main">
@@ -41,25 +41,32 @@
           <fieldset class="book-step">
             <legend><span class="step-no">1</span> Dates and guests</legend>
             <div class="form-grid">
-              <div class="field quarter">
+              <div class="field">
                 <label for="b-check_in">Check-in</label>
                 <input id="b-check_in" name="check_in" type="date" required min="<%= today %>" value="<%= pre.check_in %>" aria-describedby="b-check_in-err">
                 <p class="err" id="b-check_in-err" data-err-for="check_in" hidden></p>
               </div>
-              <div class="field quarter">
+              <div class="field">
                 <label for="b-check_out">Check-out</label>
                 <input id="b-check_out" name="check_out" type="date" required min="<%= today %>" value="<%= pre.check_out %>" aria-describedby="b-check_out-err">
                 <p class="err" id="b-check_out-err" data-err-for="check_out" hidden></p>
               </div>
-              <div class="field quarter">
-                <label for="b-adults">Adults</label>
+            </div>
+            <div class="form-grid guests-grid mt-s">
+              <div class="field">
+                <label for="b-adults">Adults <span class="opt">(13 and over)</span></label>
                 <input id="b-adults" name="adults" type="number" inputmode="numeric" min="1" max="60" value="<%= pre.adults %>" required aria-describedby="b-adults-err">
                 <p class="err" id="b-adults-err" data-err-for="adults" hidden></p>
               </div>
-              <div class="field quarter">
-                <label for="b-children">Children</label>
-                <input id="b-children" name="children" type="number" inputmode="numeric" min="0" max="60" value="<%= pre.children %>" aria-describedby="b-children-err">
-                <p class="err" id="b-children-err" data-err-for="children" hidden></p>
+              <div class="field">
+                <label for="b-children_mid">Children <span class="opt">(7 to 12)</span></label>
+                <input id="b-children_mid" name="children_mid" type="number" inputmode="numeric" min="0" max="60" value="<%= pre.children_mid %>" aria-describedby="b-children_mid-err">
+                <p class="err" id="b-children_mid-err" data-err-for="children_mid" hidden></p>
+              </div>
+              <div class="field">
+                <label for="b-children_young">Children <span class="opt">(under 7)</span></label>
+                <input id="b-children_young" name="children_young" type="number" inputmode="numeric" min="0" max="60" value="<%= pre.children_young %>" aria-describedby="b-children_young-err">
+                <p class="err" id="b-children_young-err" data-err-for="children_young" hidden></p>
               </div>
             </div>
             <p class="avail-status" data-avail-status role="status" aria-live="polite">Choose your dates to see which rooms are free.</p>
@@ -76,7 +83,7 @@
                 <div class="room-pick-body">
                   <h3 id="rp-<%= k[0] %>"><%= r.name %></h3>
                   <p class="room-price"><strong><%= rupees(r.rate * 100) %></strong> <span>per <%= k[0] === 'cottage' ? 'cottage' : 'room' %> per night<%= gstLabel %></span></p>
-                  <p class="small">Up to <%= r.maxAdults %> adult<%= r.maxAdults === 1 ? '' : 's' %><% if (r.maxChildren) { %> and <%= r.maxChildren %> child<%= r.maxChildren === 1 ? '' : 'ren' %><% } %> each.</p>
+                  <%- include('partials/room-rules', { r: r }) %>
                   <p class="room-avail" data-avail-for="<%= k[0] %>"><%= r.total %> in total</p>
                   <div class="stepper" role="group" aria-labelledby="rp-<%= k[0] %>">
                     <button type="button" class="step-btn" data-step="-1" aria-label="One fewer <%= r.name.toLowerCase() %>">&minus;</button>
@@ -90,6 +97,7 @@
               </div>
             <% }) %>
             </div>
+            <% if (s.room_photo_note) { %><p class="photo-note"><%= s.room_photo_note %></p><% } %>
           </fieldset>
 
           <fieldset class="book-step">
@@ -128,13 +136,14 @@
           <div class="summary-card">
             <h2 id="sum-h" class="h3">Your booking</h2>
             <div data-summary aria-live="polite">
+              <p class="fit-status" data-fit-status role="alert" hidden></p>
               <p class="small" data-summary-empty>Choose dates and at least one room to see the price.</p>
               <div data-summary-body hidden>
                 <p class="sum-dates" data-sum-dates></p>
                 <table class="sum-table">
                   <tbody data-sum-lines></tbody>
                   <tfoot>
-                    <tr><th scope="row">Room total</th><td data-sum-subtotal></td></tr>
+                    <tr><th scope="row">Subtotal</th><td data-sum-subtotal></td></tr>
                     <tr><th scope="row" data-sum-gst-label>GST</th><td data-sum-gst></td></tr>
                     <tr class="sum-total"><th scope="row">Total</th><td data-sum-total></td></tr>
                   </tfoot>
@@ -149,6 +158,7 @@
             <button class="btn btn-primary btn-lg btn-block" type="submit" data-pay>Continue to payment</button>
             <% if (provider === 'razorpay') { %><p class="small center pay-secure">Secure payment by Razorpay: UPI, cards and netbanking.</p><% } %>
             <ul class="plain sum-notes small">
+              <li>Extra guest charges assume your group shares the rooms, with at least one adult in each.</li>
               <li>Rooms are held for <%= holdMinutes %> minutes while you pay.</li>
               <li>After payment the Centre checks your rooms and confirms<%= replyHours ? ' within ' + replyHours + ' hours' : '' %>.</li>
               <li>If the rooms cannot be provided, your payment is refunded in full.</li>

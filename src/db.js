@@ -355,6 +355,31 @@ ALTER TABLE enquiries ADD COLUMN package_id INTEGER REFERENCES packages(id) ON D
           SELECT ?,?,?,1 WHERE NOT EXISTS (SELECT 1 FROM treatments WHERE lower(name) = lower(?))`, t.name, t.summary, ++i * 10, t.name);
       }
     }
+  },
+  {
+    id: 3,
+    name: 'room occupancy and extra guest charges',
+    sql: `
+ALTER TABLE accommodation_types ADD COLUMN max_guests INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE accommodation_types ADD COLUMN base_adults INTEGER NOT NULL DEFAULT 2;
+ALTER TABLE accommodation_types ADD COLUMN extra_adult_rate INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE accommodation_types ADD COLUMN extra_child_rate INTEGER NOT NULL DEFAULT 0;
+-- Owner's rules: cottage Rs 4,500 for 2 adults, up to 4 guests including children,
+-- extra adult Rs 1,000 and child 7-12 Rs 500 a night (no extra bed), under 7 free.
+-- Standard room: up to 2 guests, no charge for children.
+UPDATE accommodation_types SET price_per_night = 4500, max_guests = 4, base_adults = 2, extra_adult_rate = 1000, extra_child_rate = 500 WHERE kind = 'cottage';
+UPDATE accommodation_types SET max_guests = 2, base_adults = 2, extra_adult_rate = 0, extra_child_rate = 0 WHERE kind = 'standard_room';
+UPDATE accommodation_types SET amenities = CASE WHEN trim(amenities) = '' THEN 'Air-conditioned' ELSE 'Air-conditioned' || chr(10) || amenities END
+  WHERE amenities NOT ILIKE '%air-condition%';
+
+ALTER TABLE bookings ADD COLUMN children_mid INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE bookings ADD COLUMN children_young INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE bookings ADD COLUMN extra_adults INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE bookings ADD COLUMN extra_children INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE bookings ADD COLUMN extra_adult_rate INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE bookings ADD COLUMN extra_child_rate INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE bookings ADD COLUMN extras_paise INTEGER NOT NULL DEFAULT 0;
+`
   }
 ];
 

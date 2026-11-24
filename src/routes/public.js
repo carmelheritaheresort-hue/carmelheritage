@@ -189,7 +189,8 @@ get('/book', async (req, res) => {
     check_in: pick(q.check_in, /^\d{4}-\d{2}-\d{2}$/),
     check_out: pick(q.check_out, /^\d{4}-\d{2}-\d{2}$/),
     adults: pick(q.adults, /^\d{1,2}$/) || '2',
-    children: pick(q.children, /^\d{1,2}$/) || '0',
+    children_mid: pick(q.children_mid, /^\d{1,2}$/) || '0',
+    children_young: pick(q.children_young, /^\d{1,2}$/) || '0',
     room: ['cottage', 'standard'].includes(q.room) ? q.room : ''
   };
   page(req, res, 'book', {

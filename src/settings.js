@@ -49,6 +49,9 @@ When you book online we collect your name, mobile number, email address, dates, 
 const POLICY_DEFAULT = `## Booking online
 On the Book page you choose your dates, rooms and guests and pay online through Razorpay. Prices are per room per night, and GST is added at the rate shown before you pay. Your rooms are held for 20 minutes while you complete the payment.
 
+## Rooms and guests
+Each room has a maximum number of guests, children included. All rooms are air-conditioned. Any charge for extra adults or for children aged 7 to 12 is shown on the Book page before you pay. Children under 7 stay free. Room photographs are for illustration; the room you are given may differ, depending on availability.
+
 ## Confirmation
 After your payment the Centre checks your rooms and confirms your booking by phone, WhatsApp or email. Your booking is confirmed only when the Centre tells you so. If the Centre cannot provide the rooms you paid for, the amount you paid is refunded in full to the original payment method.
 
@@ -108,6 +111,8 @@ const defs = [
     options: [['advance', 'An advance (percentage below); the balance is paid at the Centre'], ['full', 'The full amount']] },
   { key: 'advance_percent', group: 'Online booking and payments', label: 'Advance to collect online (%)', type: 'percent', def: '30', review: true,
     help: 'Used only when "An advance" is selected. 100 collects the full amount.' },
+  { key: 'room_photo_note', group: 'Online booking and payments', label: 'Small note under room photos', type: 'text',
+    def: 'Images are for illustration only. The actual room may differ, depending on availability.' },
   { key: 'booking_reply_hours', group: 'Online booking and payments', label: 'Hours within which the Centre confirms a paid booking', type: 'number', def: '24', review: true,
     help: 'Shown to guests after payment. 0 hides the promise.' },
 

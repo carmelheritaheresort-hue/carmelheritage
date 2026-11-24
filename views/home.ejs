@@ -32,21 +32,25 @@
         </div>
         <div class="enquiry-main">
           <form class="quick-book" method="get" action="/book">
-            <div class="field">
+            <div class="field qb-date">
               <label for="qb-in">Check-in</label>
               <input id="qb-in" name="check_in" type="date" min="<%= fc.today %>" required>
             </div>
-            <div class="field">
+            <div class="field qb-date">
               <label for="qb-out">Check-out</label>
               <input id="qb-out" name="check_out" type="date" min="<%= fc.today %>" required>
             </div>
-            <div class="field">
+            <div class="field qb-guest">
               <label for="qb-ad">Adults</label>
               <input id="qb-ad" name="adults" type="number" inputmode="numeric" min="1" max="60" value="2">
             </div>
-            <div class="field">
-              <label for="qb-ch">Children</label>
-              <input id="qb-ch" name="children" type="number" inputmode="numeric" min="0" max="60" value="0">
+            <div class="field qb-guest">
+              <label for="qb-cm">Children <span class="opt">7&ndash;12</span></label>
+              <input id="qb-cm" name="children_mid" type="number" inputmode="numeric" min="0" max="60" value="0">
+            </div>
+            <div class="field qb-guest">
+              <label for="qb-cy">Children <span class="opt">under 7</span></label>
+              <input id="qb-cy" name="children_young" type="number" inputmode="numeric" min="0" max="60" value="0">
             </div>
             <div class="qb-submit">
               <p class="small"><% if (isFinite(fromPrice)) { %>Rooms from <%= rupees(fromPrice * 100) %> a night plus GST.<% } %></p>

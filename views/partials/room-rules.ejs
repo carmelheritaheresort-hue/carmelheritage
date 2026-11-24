@@ -1,0 +1,14 @@
+<%
+  // Params: r { maxGuests, baseAdults, extraAdult, extraChild, amenities[] }
+  const ac = (r.amenities || []).some(function (a) { return /air.?condition|\bac\b/i.test(a); });
+%>
+<ul class="room-rules">
+  <% if (r.maxGuests) { %><li>Up to <%= r.maxGuests %> guests per room, children included</li><% } %>
+  <% if (r.extraAdult || r.extraChild) { %>
+    <li>Rate is for <%= r.baseAdults %> adult<%= r.baseAdults === 1 ? '' : 's' %><% if (r.extraAdult) { %>; extra adult <%= rupees(r.extraAdult * 100) %> a night<% } %></li>
+    <li>Child aged 7 to 12: <%= r.extraChild ? rupees(r.extraChild * 100) + ' a night, no extra bed' : 'free' %>. Under 7: free</li>
+  <% } else { %>
+    <li>No extra charge for children</li>
+  <% } %>
+  <% if (ac) { %><li>Air-conditioned</li><% } %>
+</ul>

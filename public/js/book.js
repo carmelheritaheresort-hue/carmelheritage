@@ -148,15 +148,31 @@
     return {
       check_in: el.check_in.value, check_out: el.check_out.value,
       cottage_units: el.cottage_units ? +el.cottage_units.value || 0 : 0,
-      standard_units: el.standard_units ? +el.standard_units.value || 0 : 0
+      standard_units: el.standard_units ? +el.standard_units.value || 0 : 0,
+      adults: +el.adults.value || 0,
+      children_mid: +el.children_mid.value || 0,
+      children_young: +el.children_young.value || 0
     };
   }
+
+  // Tells the guest straight away when the chosen rooms cannot take everyone.
+  var fitEl = $('[data-fit-status]');
+  function fitMessage(sel) {
+    if (sel.cottage_units + sel.standard_units < 1) return '';
+    var al = C.allocate(sel, rooms);
+    if (al.error === 'adults_per_room') return 'Each room needs at least one adult. Add adults or choose fewer rooms.';
+    if (al.error === 'capacity') return 'These rooms take up to ' + al.capacity + ' guests, children included. Add a room or reduce the number of guests.';
+    return '';
+  }
+  ['adults', 'children_mid', 'children_young'].forEach(function (n) { el[n].addEventListener('input', function () { update(); }); });
 
   function update() {
     var sel = selection();
     var hasRooms = sel.cottage_units + sel.standard_units > 0;
-    var ok = datesValid() && hasRooms;
-    $('[data-summary-empty]').hidden = ok;
+    var fit = fitMessage(sel);
+    if (fitEl) { fitEl.textContent = fit; fitEl.hidden = !fit; }
+    var ok = datesValid() && hasRooms && !fit;
+    $('[data-summary-empty]').hidden = ok || !!fit;
     $('[data-summary-body]').hidden = !ok;
     if (!ok) { payBtn.textContent = 'Continue to payment'; return; }
     var q = C.quote(sel, rooms, pricing);
@@ -166,8 +182,13 @@
     q.lines.forEach(function (l) {
       var tr = document.createElement('tr'), th = document.createElement('th'), td = document.createElement('td');
       th.scope = 'row';
-      th.textContent = (l.kind === 'cottage' ? plural(l.units, 'cottage', 'cottages') : plural(l.units, 'standard room', 'standard rooms')) +
-        ' \u00D7 ' + plural(l.nights, 'night', 'nights') + ' @ ' + C.rupees(l.rate * 100);
+      var what = {
+        cottage: plural(l.units, 'cottage', 'cottages'),
+        standard_room: plural(l.units, 'standard room', 'standard rooms'),
+        extra_adult: plural(l.units, 'extra adult', 'extra adults'),
+        extra_child: plural(l.units, 'child aged 7\u201312', 'children aged 7\u201312')
+      }[l.kind];
+      th.textContent = what + ' \u00D7 ' + plural(l.nights, 'night', 'nights') + ' @ ' + C.rupees(l.rate * 100);
       td.textContent = C.rupees(l.amount);
       tr.appendChild(th); tr.appendChild(td); tb.appendChild(tr);
     });

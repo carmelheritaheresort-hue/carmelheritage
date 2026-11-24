@@ -28,7 +28,9 @@ async function roomTypes() {
     if (!(r.price_per_night > 0)) continue;
     rooms[r.kind] = {
       kind: r.kind, slug: r.slug, name: r.name, total: r.total_units, rate: r.price_per_night,
-      maxAdults: r.max_adults, maxChildren: r.max_children, photo: r.photo, photo_alt: r.photo_alt, summary: r.summary
+      maxGuests: r.max_guests, baseAdults: r.base_adults, extraAdult: r.extra_adult_rate, extraChild: r.extra_child_rate,
+      amenities: String(r.amenities || '').split('\n').map(x => x.trim()).filter(Boolean),
+      photo: r.photo, photo_alt: r.photo_alt, summary: r.summary
     };
   }
   return rooms;
@@ -100,10 +102,12 @@ async function createPending(raw, s, providerName) {
       token: crypto.randomBytes(24).toString('hex'),
       check_in: d.check_in, check_out: d.check_out, nights: q.nights,
       cottage_units: d.cottage_units, standard_units: d.standard_units,
-      adults: d.adults, children: d.children,
+      adults: d.adults, children: d.children, children_mid: d.children_mid, children_young: d.children_young,
       name: d.name, phone: d.phone, email: d.email, message: d.message,
       cottage_rate: rooms.cottage ? rooms.cottage.rate : 0,
       standard_rate: rooms.standard_room ? rooms.standard_room.rate : 0,
+      extra_adults: q.extraAdults, extra_children: q.extraChildren,
+      extra_adult_rate: q.extraAdultRate, extra_child_rate: q.extraChildRate, extras_paise: q.extras,
       gst_percent: q.gstPercent,
       subtotal_paise: q.subtotal, gst_paise: q.gst, total_paise: q.total, pay_now_paise: q.payNow,
       provider: providerName,
@@ -171,10 +175,23 @@ function publicView(b) {
   const rooms = [];
   if (b.cottage_units) rooms.push({ label: b.cottage_units === 1 ? 'Cottage' : 'Cottages', units: b.cottage_units, rate: b.cottage_rate, amount: b.cottage_units * b.cottage_rate * b.nights * 100 });
   if (b.standard_units) rooms.push({ label: b.standard_units === 1 ? 'Standard room' : 'Standard rooms', units: b.standard_units, rate: b.standard_rate, amount: b.standard_units * b.standard_rate * b.nights * 100 });
-  return { ...b, rooms, balance_paise: b.total_paise - b.pay_now_paise, statusLabel: STATUS_LABEL[b.status] || b.status };
+  if (b.extra_adults) rooms.push({ label: b.extra_adults === 1 ? 'Extra adult' : 'Extra adults', units: b.extra_adults, rate: b.extra_adult_rate, amount: b.extra_adults * b.extra_adult_rate * b.nights * 100 });
+  if (b.extra_children) rooms.push({ label: b.extra_children === 1 ? 'Child aged 7 to 12' : 'Children aged 7 to 12', units: b.extra_children, rate: b.extra_child_rate, amount: b.extra_children * b.extra_child_rate * b.nights * 100 });
+  return { ...b, rooms, guestText: guestText(b), balance_paise: b.total_paise - b.pay_now_paise, statusLabel: STATUS_LABEL[b.status] || b.status };
+}
+
+// "2 adults, 1 child aged 7 to 12, 1 child under 7". Older bookings only have a total for children.
+function guestText(b) {
+  const n = (x, one, many) => `${x} ${x === 1 ? one : many}`;
+  const parts = [n(b.adults, 'adult', 'adults')];
+  if (b.children_mid || b.children_young) {
+    if (b.children_mid) parts.push(n(b.children_mid, 'child aged 7 to 12', 'children aged 7 to 12'));
+    if (b.children_young) parts.push(n(b.children_young, 'child under 7', 'children under 7'));
+  } else if (b.children) parts.push(n(b.children, 'child', 'children'));
+  return parts.join(', ');
 }
 
 module.exports = {
   HOLD_MINUTES, STATUS_LABEL, roomTypes, pricing, availability, createPending, setOrder,
-  byRef, byOrder, tokenOk, markPaid, markFailed, addNote, expireHolds, publicView, rupees: calc.rupees
+  byRef, byOrder, tokenOk, markPaid, markFailed, addNote, expireHolds, publicView, guestText, rupees: calc.rupees
 };

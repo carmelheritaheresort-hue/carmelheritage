@@ -7,7 +7,7 @@
       <p class="eyebrow">Accommodation and food</p>
       <h2 id="stayx-h">Stay &amp; <em>Experience</em></h2>
       <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
-      <p class="lead">Daily rates for rooms and Ayurvedic diet food. These are charged separately from the treatment packages.</p>
+      <p class="lead">Daily rates for rooms and Ayurvedic diet food while you are on a treatment package. These are charged separately from the package price.</p>
     </div>
     <div class="stay-cards">
       <% stayCards.forEach(function (c) { %>
@@ -23,7 +23,8 @@
         </article>
       <% }) %>
     </div>
-    <p class="small center mt">Rates are per day. The Centre confirms availability and the rate for your dates.</p>
+    <p class="small center mt">Rates are per day for guests on an Ayurvedic treatment package. All rooms are air-conditioned. For a stay without treatments, see <a href="/book">Book your stay</a>.</p>
+    <% if (s.room_photo_note) { %><p class="photo-note center"><%= s.room_photo_note %></p><% } %>
     <% if (stayGallery.length) { %>
       <ul class="stay-gallery">
         <% stayGallery.forEach(function (g) { %>

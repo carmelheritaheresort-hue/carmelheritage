@@ -24,7 +24,8 @@ Everything below is either empty, hidden, or filled with cautious wording. None 
 
 ## Ayurveda packages (added from the brochure details supplied in the upgrade brief)
 The brochure PDF itself was not received; all packages, prices and schedules were taken from the written brief and kept exactly as given. Edit them in Admin > Packages.
-- **Room prices disagree.** The brochure rates on the Ayurveda Packages page are Cottage Room ₹5,500/day and Deluxe Room ₹3,000/day. The online booking and Stay pages use ₹4,500 (cottage) and ₹1,500 (standard room) per night plus 5% GST, as supplied earlier. Decide which is correct; until then guests see both.
+- **Room prices (resolved by the owner):** normal online bookings use ₹4,500 (cottage) and ₹1,500 (standard room) per night plus GST. The brochure rates (Cottage Room ₹5,500/day, Deluxe Room ₹3,000/day) are shown on the Ayurveda Packages page as the rates for guests on a treatment package. Confirm this reading.
+- **Occupancy rules (from the owner):** cottage rate covers 2 adults; up to 4 guests including children; extra adult ₹1,000 and child aged 7 to 12 ₹500 a night (no extra bed); under 7 free. Standard room: up to 2 guests in total, children included and free. Points to confirm: guests aged 13+ are counted as adults; extra charges are per night; a standard room cannot take 2 adults plus a child (set "Most guests per room" to 3 in Admin > Accommodation if it can).
 - **"Deluxe Room" vs "Standard Room".** The brochure says Deluxe Room; the website calls the 7 tiled rooms Standard Rooms. The Deluxe Room card uses the standard room photo. Confirm they are the same rooms.
 - Whether brochure prices include GST, and whether package prices are per person or per package.
 - **Schedules that do not add up** (kept as supplied):
