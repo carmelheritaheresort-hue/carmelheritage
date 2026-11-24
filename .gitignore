@@ -2,7 +2,8 @@ node_modules/
 .env
 .env.*
 !.env.example
-data/
+# Local database, uploads and backups (top-level folder only; src/data holds source code)
+/data/
 *.log
 .vercel/
 .DS_Store
