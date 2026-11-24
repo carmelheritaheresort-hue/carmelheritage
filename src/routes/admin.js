@@ -10,7 +10,7 @@ const { upload, finalize, removeUpload } = require('../uploads');
 const { wrap, fmtDateTime, csvCell, isHttpUrl, todayIST } = require('../util');
 const booking = require('../booking');
 const guests = require('../guests');
-const inventory = require('../inventory');
+const inventory = require('../calendar'); // inventory calendar (blocks, free rooms, date prices)
 const calc = require('../../public/js/booking-calc.js');
 
 const router = express.Router();

@@ -2,6 +2,7 @@
 const { AsyncLocalStorage } = require('async_hooks');
 const { Pool, types } = require('pg');
 const config = require('./config');
+const inventory = require('./inventory');
 
 // COUNT/SUM come back as strings by default; this app's numbers are small enough for JS numbers.
 types.setTypeParser(20, v => parseInt(v, 10));   // int8
