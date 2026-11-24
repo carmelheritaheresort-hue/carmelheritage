@@ -1,40 +1,28 @@
-/* Homepage hero slideshow: crossfade with a slow zoom ("Ken Burns"), a progress line in step with
-   each photo, and a pause button. A photo is shown only once it has fully loaded, so the timing
-   stays even. Visitors who ask their device for reduced motion get a still photo. */
+/* Homepage hero slideshow: crossfade with a slow zoom ("Ken Burns"). A new photo appears every
+   "seconds per photo" (fade included). All photos are fetched up front so the fast pace stays even;
+   a photo is shown only once it has fully loaded. Visitors who ask their device for reduced motion
+   get a still photo. */
 (function () {
   'use strict';
   var fig = document.querySelector('[data-slideshow]');
   if (!fig) return;
   var slides = Array.prototype.slice.call(fig.querySelectorAll('.hs-slide'));
-  var bar = document.querySelector('[data-slideshow-toggle] .hs-progress');
-  var scope = fig.closest('.hero') || fig; // timing variables reach both the photos and the button
-  var btn = document.querySelector('[data-slideshow-toggle]');
   if (slides.length < 2) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  var hold = Math.max(0.3, parseFloat(fig.getAttribute('data-hold')) || 3);
-  var fade = Math.max(0.1, parseFloat(fig.getAttribute('data-fade')) || 0.5);
-  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var step = Math.max(0.1, parseFloat(fig.getAttribute('data-hold')) || 0.3);
+  var fade = Math.min(Math.max(0.05, parseFloat(fig.getAttribute('data-fade')) || 0.15), step / 2);
+  var scope = fig.closest('.hero') || fig;
 
   // Timing goes to CSS through custom properties (CSSOM, allowed by the site's security policy).
   scope.style.setProperty('--fade', fade + 's');
-  scope.style.setProperty('--hold', hold + 's');
-  scope.style.setProperty('--kb', (hold + fade * 2) + 's');
+  scope.style.setProperty('--kb', (step + fade) + 's');
 
   var current = 0, timer = null, playing = false, waiting = false;
 
-  function load(i) {
-    var img = slides[i];
-    if (!img || img.getAttribute('src')) return;
-    img.src = img.getAttribute('data-src');
-  }
   function ready(img) { return img.complete && img.naturalWidth > 0; }
-  function preload(from) { load((from + 1) % slides.length); load((from + 2) % slides.length); }
-
-  function restartBar() {
-    if (!bar) return;
-    bar.classList.remove('run');
-    void bar.offsetWidth; // restart the CSS animation
-    if (playing) bar.classList.add('run');
+  function loadAll() {
+    slides.forEach(function (img) { if (!img.getAttribute('src')) img.src = img.getAttribute('data-src'); });
   }
 
   function show(next) {
@@ -48,8 +36,6 @@
     prev.classList.remove('is-on');
     setTimeout(function () { prev.classList.remove('is-leaving'); }, fade * 1000 + 50);
     current = next;
-    preload(next);
-    restartBar();
     schedule();
   }
 
@@ -57,7 +43,6 @@
     if (!playing) return;
     var next = (current + 1) % slides.length;
     var img = slides[next];
-    load(next);
     if (ready(img)) { waiting = false; show(next); return; }
     // Not loaded yet: wait for it rather than show a half-drawn photo.
     if (waiting) return;
@@ -75,32 +60,19 @@
 
   function schedule() {
     clearTimeout(timer);
-    if (playing) timer = setTimeout(advance, (hold + fade) * 1000);
+    if (playing) timer = setTimeout(advance, step * 1000);
   }
 
   function setPlaying(on) {
     playing = on;
     fig.classList.toggle('is-paused', !on);
-    if (btn) {
-      btn.setAttribute('aria-pressed', on ? 'false' : 'true');
-      btn.querySelector('.hs-label').textContent = on ? 'Pause slideshow' : 'Play slideshow';
-      btn.classList.toggle('is-paused', !on);
-    }
-    if (on) { preload(current); restartBar(); schedule(); } else { clearTimeout(timer); if (bar) bar.classList.remove('run'); }
+    if (on) schedule(); else clearTimeout(timer);
   }
 
-  var userPaused = calm;
-  if (btn) {
-    btn.hidden = false;
-    btn.addEventListener('click', function () { userPaused = playing; setPlaying(!playing); });
-  }
   // Stop while the tab is hidden, so the timing is in step again when the visitor comes back.
-  document.addEventListener('visibilitychange', function () {
-    if (document.hidden) setPlaying(false); else if (!userPaused) setPlaying(true);
-  });
+  document.addEventListener('visibilitychange', function () { setPlaying(!document.hidden); });
 
-  fig.classList.add('hs-ready');
   var first = slides[0];
-  var start = function () { if (!userPaused) setPlaying(true); else setPlaying(false); };
+  var start = function () { loadAll(); setPlaying(!document.hidden); };
   if (ready(first)) start(); else { first.addEventListener('load', start, { once: true }); first.addEventListener('error', start, { once: true }); }
 })();

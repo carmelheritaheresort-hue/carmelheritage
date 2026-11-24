@@ -100,7 +100,7 @@ r.post('/settings', auth.allow(), async (req, res) => {
       if (d.type === 'email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) errors.push(`${d.label}: enter a valid email address`);
       if (d.type === 'tel' && v && !/^\+?[\d\s()-]{6,30}$/.test(v)) errors.push(`${d.label}: enter a valid phone number`);
       if (d.type === 'number') { const n = parseInt(v, 10); if (isNaN(n) || n < 0 || n > 3650) { errors.push(`${d.label}: enter a number from 0 to 3650`); v = d.def; } else v = String(n); }
-      if (d.type === 'seconds') { const n = Number(v); if (v === '' || isNaN(n) || n < 0.3 || n > 30) { errors.push(`${d.label}: enter a number of seconds from 0.3 to 30`); v = d.def; } else v = String(Math.round(n * 10) / 10); }
+      if (d.type === 'seconds') { const n = Number(v); if (v === '' || isNaN(n) || n < 0.1 || n > 30) { errors.push(`${d.label}: enter a number of seconds from 0.1 to 30`); v = d.def; } else v = String(Math.round(n * 100) / 100); }
       if (d.type === 'amount') { const n = parseInt(String(v).replace(/[,\s₹]/g, ''), 10); if (isNaN(n) || n < 0 || n > 10000000) { errors.push(`${d.label}: enter an amount in rupees, numbers only`); v = d.def; } else v = String(n); }
       if (d.type === 'percent') {
         const n = Number(v);
