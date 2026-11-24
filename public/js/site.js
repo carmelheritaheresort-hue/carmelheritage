@@ -19,6 +19,37 @@
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
+  // Cards fade in gently as they scroll into view. Skipped when the visitor prefers reduced motion.
+  var reveal = document.querySelectorAll('.reveal');
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reveal.length && 'IntersectionObserver' in window && !calm) {
+    var fired = false;
+    var showAll = function () { reveal.forEach(function (el) { el.classList.add('is-in'); }); };
+    var io = new IntersectionObserver(function (entries) {
+      fired = true;
+      entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } });
+    }, { rootMargin: '0px 0px -5% 0px' });
+    // Cards already on screen are shown straight away; only those further down fade in.
+    reveal.forEach(function (el) {
+      if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('is-in');
+      else io.observe(el);
+    });
+    document.documentElement.classList.add('reveal-on');
+    // Safety net: if the browser never reports scrolling, show everything rather than leave gaps.
+    setTimeout(function () { if (!fired) showAll(); }, 1500);
+    window.addEventListener('beforeprint', showAll);
+  }
+
+  // Opening a package link (#package-12) expands its treatment schedule.
+  function openTarget() {
+    var el = location.hash && document.getElementById(location.hash.slice(1));
+    var d = el && el.querySelector('details');
+    if (d) d.open = true;
+    if (el) el.classList.add('is-in');
+  }
+  window.addEventListener('hashchange', openTarget);
+  openTarget();
+
   if (!toggle || !nav || !header) return;
 
   function setOpen(open) {

@@ -28,12 +28,30 @@ module.exports = {
       ...sortApproved
     ]
   },
+  packages: {
+    table: 'packages', label: 'Packages', singular: 'package', cols: ['name', 'category', 'duration', 'price', 'featured', 'approved'],
+    intro: 'Ayurvedic treatment packages shown on the Ayurveda Packages page. Prices are for the treatments listed; accommodation and food are shown separately. "Featured" packages also appear on the homepage.',
+    fields: [
+      { name: 'name', label: 'Package name', type: 'text', required: true, max: 150 },
+      { name: 'category', label: 'Category', type: 'select', options: [['single', 'One treatment session per day'], ['double', 'Two treatment sessions per day']] },
+      { name: 'duration', label: 'Duration (for example "7 days" or "1 hour")', type: 'text', required: true, max: 60 },
+      { name: 'price', label: 'Price in rupees (numbers only, e.g. 18000)', type: 'number', min: 0, max: 10000000 },
+      { name: 'schedule', label: 'Treatments / schedule (one per line, e.g. "Elakizhi + Sirodhara – 3 days")', type: 'textarea', max: 3000 },
+      { name: 'summary', label: 'Short note (optional, shown under the name)', type: 'text', max: 300 },
+      { name: 'featured', label: 'Feature on the homepage', type: 'bool' },
+      { name: 'photo', label: 'Photograph (optional, used on the homepage card)', type: 'image' },
+      { name: 'photo_alt', label: 'Photograph alt text', type: 'text', max: 200 },
+      ...sortApproved
+    ]
+  },
   treatments: {
     table: 'treatments', label: 'Treatments', singular: 'treatment', cols: ['name', 'duration', 'approved'],
     intro: 'Add only treatments the Centre has approved. Do not describe cures, prevention, detox results or guaranteed outcomes.',
     fields: [
       { name: 'name', label: 'Treatment name', type: 'text', required: true, max: 150 },
       { name: 'summary', label: 'Short summary', type: 'text', max: 300 },
+      { name: 'photo', label: 'Photograph (rights confirmed)', type: 'image' },
+      { name: 'photo_alt', label: 'Photograph alt text', type: 'text', max: 200 },
       { name: 'description', label: 'Description', type: 'textarea', max: 4000 },
       { name: 'duration', label: 'Duration', type: 'text', max: 100 },
       { name: 'price', label: 'Price (only if approved for publishing)', type: 'text', max: 100 },

@@ -17,6 +17,10 @@
     <dt>Adults / children</dt><dd><%= e.adults %> / <%= e.children %></dd>
     <dt>Preference</dt><dd><%= e.accommodation_pref %></dd>
     <dt>Units requested</dt><dd><%= e.units %></dd>
+  <% } else if (e.type === 'package') { %>
+    <dt>Package</dt><dd><%= e.treatment || '-' %><% if (e.package_id) { %> &middot; <a href="/admin/content/packages/<%= e.package_id %>">view package</a><% } %></dd>
+    <dt>Preferred arrival</dt><dd><%= e.check_in || '-' %></dd>
+    <dt>Guests</dt><dd><%= e.adults %></dd>
   <% } else { %>
     <dt>Treatment</dt><dd><%= e.treatment || '-' %></dd>
     <dt>Preferred date</dt><dd><%= e.check_in || '-' %></dd>

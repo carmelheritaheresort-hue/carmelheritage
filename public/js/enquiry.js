@@ -30,6 +30,22 @@
     function syncUnits() { if (pref && units) { var m = maxUnits()[pref.value]; if (m) units.max = m; } }
     if (pref) { pref.addEventListener('change', syncUnits); syncUnits(); }
 
+    // Package mode: the chosen package fills in its duration and price.
+    var pkgSelect = form.querySelector('[data-package-select]');
+    var packages = {};
+    if (pkgSelect) {
+      Array.prototype.forEach.call(pkgSelect.options, function (o) {
+        if (o.value) packages[o.value] = { name: o.getAttribute('data-name'), duration: o.getAttribute('data-duration'), priceText: o.getAttribute('data-price') };
+      });
+      var syncPkg = function () {
+        var p = packages[pkgSelect.value];
+        form.querySelector('[data-package-duration]').value = p ? p.duration : '';
+        form.querySelector('[data-package-price]').value = p ? p.priceText : '';
+      };
+      pkgSelect.addEventListener('change', syncPkg);
+      syncPkg();
+    }
+
     function clearErrors() {
       form.querySelectorAll('[data-err-for]').forEach(function (p) { p.hidden = true; p.textContent = ''; });
       form.querySelectorAll('[aria-invalid]').forEach(function (i) { i.removeAttribute('aria-invalid'); });
@@ -80,7 +96,7 @@
       ev.preventDefault();
       clearErrors();
       var raw = collect();
-      var res = V.validate(raw, { today: today, maxUnits: maxUnits() });
+      var res = V.validate(raw, { today: today, maxUnits: maxUnits(), packages: packages });
       if (!res.ok) { showErrors(res.errors); return; }
 
       var data = res.clean;
@@ -95,7 +111,7 @@
 
       var payload = Object.assign({}, data, { website: raw.website || '', elapsed: Date.now() - opened });
       sendCopy(payload);
-      if (window.cavTrack) { window.cavTrack('Enquiry Submit'); window.cavTrack('WhatsApp Click'); }
+      if (window.cavTrack) { window.cavTrack(mode === 'package' ? 'Package Enquiry Submit' : 'Enquiry Submit'); window.cavTrack('WhatsApp Click'); }
 
       showSuccess(!win);
     });

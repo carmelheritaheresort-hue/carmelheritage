@@ -1,5 +1,6 @@
 const config = require('./config');
 const { db } = require('./db');
+const brochure = require('./data/brochure');
 
 const ABOUT_DEFAULT = `## The Centre's roots
 Carmel Ayurveda Village and Research Centre was initiated in 1983. It grew out of the social commitment activities of Nirmalgram Welfare Centre, which was established under the Carmel Province of the CMI Congregation.
@@ -109,6 +110,20 @@ const defs = [
     help: 'Used only when "An advance" is selected. 100 collects the full amount.' },
   { key: 'booking_reply_hours', group: 'Online booking and payments', label: 'Hours within which the Centre confirms a paid booking', type: 'number', def: '24', review: true,
     help: 'Shown to guests after payment. 0 hides the promise.' },
+
+  // Ayurveda packages page
+  { key: 'packages_intro', group: 'Ayurveda packages page', label: 'Page introduction', type: 'textarea',
+    def: 'Rejuvenate, Rediscover and Rejoice. Discover traditional Ayurvedic wellness experiences and personalised treatment programmes at Carmel Heritage.' },
+  { key: 'packages_note', group: 'Ayurveda packages page', label: 'Note shown above the packages', type: 'textarea', review: true,
+    def: 'Package prices cover the treatments listed. Accommodation and food are charged separately at the daily rates shown below. Please ask the Centre whether a package is suitable for you.' },
+  { key: 'packages_image', group: 'Ayurveda packages page', label: 'Page banner photograph', type: 'image', def: '', help: 'If empty, the Treatments banner is used.' },
+  { key: 'packages_image_alt', group: 'Ayurveda packages page', label: 'Banner alt text', type: 'text', def: '' },
+  { key: 'rate_cottage', group: 'Ayurveda packages page', label: '"Stay & Experience": Cottage Room, rupees per day', type: 'amount', def: String(brochure.rates.cottage), review: true,
+    help: 'Shown on the Ayurveda Packages page only. The online booking price is set separately under Accommodation.' },
+  { key: 'rate_deluxe', group: 'Ayurveda packages page', label: '"Stay & Experience": Deluxe Room, rupees per day', type: 'amount', def: String(brochure.rates.deluxe), review: true },
+  { key: 'rate_diet_food', group: 'Ayurveda packages page', label: '"Stay & Experience": Ayurvedic Diet Food, rupees per day', type: 'amount', def: String(brochure.rates.dietFood), review: true },
+  { key: 'diet_food_image', group: 'Ayurveda packages page', label: 'Ayurvedic Diet Food photograph', type: 'image', def: '' },
+  { key: 'diet_food_image_alt', group: 'Ayurveda packages page', label: 'Diet food photograph alt text', type: 'text', def: '' },
 
   // Homepage
   { key: 'hero_eyebrow', group: 'Homepage', label: 'Hero small line above the headline', type: 'text', def: 'Bhoothathankettu · Kothamangalam · Kerala' },

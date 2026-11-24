@@ -1,0 +1,39 @@
+<%
+  // Params: pkg (decorated package), media { src, alt } (optional), compact (homepage), headingTag
+  const p = pkg;
+  const H = locals.headingTag || 'h3';
+  const waText = 'Hello ' + s.site_name + ', I am interested in the ' + p.label + ' (' + p.duration + ', ' + p.priceText + '). Please share the availability and booking procedure.';
+  const bookHref = '/enquiry?type=package&package=' + p.id;
+  const overview = p.treatmentNames.slice(0, 5).join(', ') + (p.treatmentNames.length > 5 ? ' and more' : '');
+%>
+<article class="pkg-card<%= p.days >= 14 ? ' is-long' : '' %><%= locals.media ? ' has-media' : '' %> reveal" id="<%= locals.compact ? 'featured' : 'package' %>-<%= p.id %>">
+  <% if (locals.media) { %>
+    <div class="pkg-media"><% if (media.src) { %><%- img(media.src, media.alt) %><% } else { %><div class="ph" aria-hidden="true"><img src="/img/logo-emblem-gold.png" alt="" width="256" height="253"></div><% } %></div>
+  <% } %>
+  <div class="pkg-body">
+    <p class="pkg-cat"><%= p.categoryShort %><% if (p.days >= 14) { %><span class="pkg-tag">Extended programme</span><% } %></p>
+    <<%= H %> class="pkg-name"><%= p.name %></<%= H %>>
+    <div class="pkg-meta">
+      <span class="pkg-duration"><span class="sr-only">Duration: </span><%= p.duration %></span>
+      <span class="pkg-price"><span class="sr-only">Price: </span><%= p.priceText %></span>
+    </div>
+    <% if (p.summary) { %><p class="pkg-summary"><%= p.summary %></p><% } %>
+    <% if (overview) { %><p class="pkg-overview"><span>Includes</span> <%= overview %></p><% } %>
+    <% if (!locals.compact && p.scheduleLines.length) { %>
+    <details class="pkg-schedule">
+      <summary><%= p.isDaySchedule ? 'Treatment schedule' : 'Treatments included' %> <span class="sr-only">for <%= p.label %></span></summary>
+      <ul>
+        <% p.scheduleLines.forEach(function (l) { %><li><%= l %></li><% }) %>
+      </ul>
+    </details>
+    <% } %>
+    <div class="pkg-actions">
+      <a class="btn btn-primary btn-sm" href="<%= bookHref %>" data-track="Package Book Click">Book now<span class="sr-only">: <%= p.label %></span></a>
+      <% if (locals.compact) { %>
+        <a class="btn btn-outline btn-sm" href="/ayurveda-packages#package-<%= p.id %>">View details<span class="sr-only"> of <%= p.label %></span></a>
+      <% } else { %>
+        <a class="btn btn-whatsapp btn-sm" href="<%= waLink(waText) %>" target="_blank" rel="noopener" data-track="WhatsApp Click">WhatsApp<span class="sr-only"> about <%= p.label %> (opens in a new tab)</span></a>
+      <% } %>
+    </div>
+  </div>
+</article>

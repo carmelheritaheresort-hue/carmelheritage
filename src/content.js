@@ -6,7 +6,41 @@ async function safe(fn, fallback) {
   try { return await fn(); } catch (e) { console.error('Content read failed:', e.message); return fallback; }
 }
 
-const ALLOWED_TABLES = new Set(['treatments', 'facilities', 'gallery', 'faqs', 'testimonials', 'management', 'accommodation_types']);
+const ALLOWED_TABLES = new Set(['treatments', 'facilities', 'gallery', 'faqs', 'testimonials', 'management', 'accommodation_types', 'packages']);
+const { CATEGORY } = require('./data/brochure');
+
+const inr = n => '\u20B9' + Number(n || 0).toLocaleString('en-IN');
+
+// Treatment names in a schedule line: "Day 2: Elakizhi + Sirodhara – 3 days" -> ["Elakizhi", "Sirodhara"]
+function treatmentsIn(line) {
+  return line.replace(/^Day\s*\d+\s*:\s*/i, '').split(/\s[–-]\s/)[0].split('+').map(x => x.trim()).filter(Boolean);
+}
+
+// Adds the display fields every page and the enquiry check use, so labels and prices match everywhere.
+function decoratePackage(p) {
+  const lines = lines_(p.schedule);
+  const names = [...new Set(lines.flatMap(treatmentsIn))];
+  const cat = CATEGORY[p.category] || { label: p.category, short: p.category };
+  const days = parseInt((String(p.duration).match(/(\d+)\s*day/i) || [])[1], 10) || 0;
+  return {
+    ...p, scheduleLines: lines, treatmentNames: names,
+    categoryLabel: cat.label, categoryShort: cat.short,
+    label: `${p.name} (${cat.short})`, priceText: inr(p.price), days,
+    isDaySchedule: lines.some(l => /^Day\s*\d+/i.test(l) || /[–-]\s*\d+\s*days?$/i.test(l))
+  };
+}
+const lines_ = t => String(t || '').split('\n').map(l => l.trim()).filter(Boolean);
+
+async function packages() {
+  return (await approved('packages')).filter(p => p.name && p.price > 0).map(decoratePackage);
+}
+
+// id -> { name, duration, priceText } for the package enquiry form and its server-side check.
+function packageMap(list) {
+  const out = {};
+  for (const p of list) out[p.id] = { name: p.label, duration: p.duration, priceText: p.priceText };
+  return out;
+}
 
 async function approved(table) {
   if (!ALLOWED_TABLES.has(table)) throw new Error('bad table');
@@ -36,4 +70,4 @@ function formContext(types) {
   };
 }
 
-module.exports = { safe, approved, accommodation, faqs, testimonials, formContext };
+module.exports = { safe, approved, accommodation, faqs, testimonials, formContext, packages, packageMap, decoratePackage, inr, CATEGORY };

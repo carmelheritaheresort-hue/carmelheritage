@@ -127,6 +127,25 @@
     </div>
   </section>
 
+  <% if (featured.length) { %>
+  <section class="section bg-parchment" aria-labelledby="pkg-h">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Wellness packages</p>
+        <h2 id="pkg-h">Explore Our Ayurvedic <em>Wellness Packages</em></h2>
+        <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+        <p class="lead">Treatment programmes with one or two sessions a day, from a single day to 21 days. Accommodation and food are charged separately.</p>
+      </div>
+      <div class="pkg-grid featured">
+        <% featured.forEach(function (f) { %><%- include('partials/package-card', { pkg: f.pkg, media: f.media, compact: true }) %><% }) %>
+      </div>
+      <div class="btn-row center mt">
+        <a class="btn btn-primary btn-lg" href="/ayurveda-packages">Explore all packages</a>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
   <% if (facilities.length) { %>
   <section class="section" aria-labelledby="fac-h">
     <div class="container">

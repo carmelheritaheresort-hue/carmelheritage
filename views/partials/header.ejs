@@ -20,7 +20,7 @@
     <nav id="site-nav" class="site-nav" aria-label="Main">
       <ul class="nav-list">
         <% nav.forEach(function (item) {
-             const active = item.path === '/' ? currentPath === '/' : (currentPath === item.path || currentPath.indexOf(item.path + '/') === 0); %>
+             const active = item.path === '/' ? currentPath === '/' : (currentPath === item.path || currentPath.indexOf(item.path + '/') === 0 || (item.children || []).some(function (c) { return c.path === currentPath; })); %>
           <li class="<%= item.children ? 'has-sub' : '' %>">
             <a href="<%= item.path %>"<%- active ? ' aria-current="page"' : '' %>><%= item.name %></a>
             <% if (item.children) { %>

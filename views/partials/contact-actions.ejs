@@ -1,0 +1,17 @@
+<%
+  // Params: actionsTitle (optional), actionsText (optional), waText (optional)
+  const msg = locals.waText || ('Hello ' + s.site_name + ', I\u2019d like to ask about your Ayurvedic treatment packages.');
+%>
+<section class="section-tight bg-forest on-dark kasavu kasavu-bottom" aria-labelledby="ca-h">
+  <div class="container narrow center">
+    <p class="eyebrow">Talk to the Centre</p>
+    <h2 id="ca-h"><%- locals.actionsTitle || 'Questions about a <em>package</em>?' %></h2>
+    <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+    <p class="lead"><%= locals.actionsText || 'Message or call the Centre. They will help you choose a package and confirm availability for your dates.' %></p>
+    <div class="btn-row center">
+      <a class="btn btn-whatsapp btn-lg" href="<%= waLink(msg) %>" target="_blank" rel="noopener" data-track="WhatsApp Click">WhatsApp us<span class="sr-only"> (opens in a new tab)</span></a>
+      <% phones.forEach(function (p) { %><a class="btn btn-outline-light btn-lg" href="<%= tel(p) %>" data-track="Call Click">Call now: <%= p %></a><% }) %>
+      <a class="btn btn-gold btn-lg" href="/enquiry?type=treatment">General enquiry</a>
+    </div>
+  </div>
+</section>

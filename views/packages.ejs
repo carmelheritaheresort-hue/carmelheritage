@@ -1,0 +1,65 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<main id="main">
+  <%- include('partials/page-hero', {
+    heroEyebrow: 'Ayurveda',
+    heroTitle: 'Ayurvedic Treatments &amp; <em>Wellness Packages</em>',
+    heroLead: s.packages_intro,
+    heroImage: s.packages_image || s.treatments_image,
+    heroAlt: s.packages_image ? s.packages_image_alt : s.treatments_image_alt,
+    heroExtra: '<p class="tabs" role="navigation" aria-label="On this page"><a class="tab" href="#one-session">One session per day</a><a class="tab" href="#two-sessions">Two sessions per day</a><a class="tab" href="#stay-experience">Stay &amp; food</a></p>'
+  }) %>
+
+  <% if (!groups.single.length && !groups.double.length) { %>
+    <section class="section"><div class="container"><div class="empty-state">
+      <img src="/img/logo-emblem.png" alt="" width="72" height="71">
+      <p>Package details will be published here soon. Please contact the Centre to ask about treatment packages.</p>
+    </div></div></section>
+  <% } %>
+
+  <% if (groups.single.length) { %>
+  <section class="section" id="one-session" aria-labelledby="one-h">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Category A</p>
+        <h2 id="one-h">One Treatment Session <em>Per Day</em></h2>
+        <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+        <% if (s.packages_note) { %><p class="lead"><%= s.packages_note %></p><% } %>
+      </div>
+      <div class="pkg-grid">
+        <% groups.single.forEach(function (p) { %><%- include('partials/package-card', { pkg: p }) %><% }) %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <% if (groups.double.length) { %>
+  <section class="section bg-parchment" id="two-sessions" aria-labelledby="two-h">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">Category B &middot; Two treatment sessions per day</p>
+        <h2 id="two-h">Extended Ayurvedic <em>Wellness Packages</em></h2>
+        <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+        <p class="lead">Longer programmes with two treatment sessions each day.</p>
+      </div>
+      <div class="pkg-grid">
+        <% groups.double.forEach(function (p) { %><%- include('partials/package-card', { pkg: p }) %><% }) %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <%- include('partials/stay-experience') %>
+
+  <section class="section-tight" aria-labelledby="learn-h">
+    <div class="container narrow center">
+      <h2 id="learn-h" class="h3">About the treatments</h2>
+      <p>Read a short description of each treatment in these packages, such as Abhyangam, Sirodhara, Elakizhi and Njavarakizhi.</p>
+      <div class="btn-row center"><a class="btn btn-outline" href="/treatments">Our Ayurvedic treatments</a></div>
+      <p class="note mt">Ayurveda treatments are not a substitute for medical advice, and no result can be promised. Please ask the Centre whether a package is suitable for you.</p>
+    </div>
+  </section>
+
+  <%- include('partials/contact-actions') %>
+</main>
+<%- include('partials/footer') %>

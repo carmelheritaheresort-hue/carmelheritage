@@ -27,7 +27,9 @@ async function notifyEnquiry(e, to, adminUrl) {
     e.email ? `Email: ${e.email}` : null,
     e.type === 'stay'
       ? `Check-in: ${e.check_in}\nCheck-out: ${e.check_out}\nAdults: ${e.adults}\nChildren: ${e.children}\nPreference: ${e.accommodation_pref}\nUnits: ${e.units}`
-      : `Treatment: ${e.treatment || '-'}\nPreferred date: ${e.check_in || '-'}`,
+      : e.type === 'package'
+        ? `Package: ${e.treatment || '-'}\nPreferred arrival: ${e.check_in || '-'}\nGuests: ${e.adults}`
+        : `Treatment: ${e.treatment || '-'}\nPreferred date: ${e.check_in || '-'}`,
     `Message: ${e.message || '-'}`,
     '',
     'This is an enquiry only. The guest may not yet have sent the WhatsApp message.',

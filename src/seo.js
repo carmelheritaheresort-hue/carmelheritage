@@ -53,4 +53,26 @@ function faqLd(faqs) {
   };
 }
 
-module.exports = { businessLd, websiteLd, breadcrumbLd, faqLd, abs };
+// Treatment packages as an offer catalogue: names, durations and prices exactly as published on the page.
+function packagesLd(s, list) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'OfferCatalog',
+    name: 'Ayurvedic Treatments & Wellness Packages',
+    provider: { '@id': config.siteUrl + '/#business' },
+    itemListElement: list.map(p => ({
+      '@type': 'Offer',
+      name: p.label,
+      price: String(p.price),
+      priceCurrency: 'INR',
+      itemOffered: {
+        '@type': 'Service',
+        name: p.label,
+        serviceType: 'Ayurvedic treatment package',
+        description: `${p.duration}. ${p.categoryLabel}. Treatments: ${p.treatmentNames.join(', ')}.`
+      }
+    }))
+  };
+}
+
+module.exports = { businessLd, websiteLd, breadcrumbLd, faqLd, packagesLd, abs };

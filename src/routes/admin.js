@@ -100,6 +100,7 @@ r.post('/settings', auth.allow(), async (req, res) => {
       if (d.type === 'email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) errors.push(`${d.label}: enter a valid email address`);
       if (d.type === 'tel' && v && !/^\+?[\d\s()-]{6,30}$/.test(v)) errors.push(`${d.label}: enter a valid phone number`);
       if (d.type === 'number') { const n = parseInt(v, 10); if (isNaN(n) || n < 0 || n > 3650) { errors.push(`${d.label}: enter a number from 0 to 3650`); v = d.def; } else v = String(n); }
+      if (d.type === 'amount') { const n = parseInt(String(v).replace(/[,\s₹]/g, ''), 10); if (isNaN(n) || n < 0 || n > 10000000) { errors.push(`${d.label}: enter an amount in rupees, numbers only`); v = d.def; } else v = String(n); }
       if (d.type === 'percent') {
         const n = Number(v);
         const min = d.key === 'advance_percent' ? 1 : 0;
@@ -161,6 +162,8 @@ async function saveResource(req, res, isNew) {
       vals[f.name] = Math.max(f.min ?? -100000, Math.min(f.max ?? 100000, n));
     } else if (f.type === 'bool') {
       vals[f.name] = raw === '1' ? 1 : 0;
+    } else if (f.type === 'select') {
+      vals[f.name] = f.options.some(o => o[0] === raw) ? raw : (existing[f.name] || f.options[0][0]);
     } else if (f.type === 'image') {
       let v = existing[f.name] || '';
       const file = files['file__' + f.name];
@@ -203,7 +206,7 @@ const enq = ['staff'];
 function enquiryFilter(q) {
   const w = [], p = [];
   if (STATUSES.includes(q.status)) { w.push('status=?'); p.push(q.status); }
-  if (['stay', 'treatment'].includes(q.type)) { w.push('type=?'); p.push(q.type); }
+  if (['stay', 'treatment', 'package'].includes(q.type)) { w.push('type=?'); p.push(q.type); }
   if (PREFS.includes(q.pref)) { w.push('accommodation_pref=?'); p.push(q.pref); }
   const d = /^\d{4}-\d{2}-\d{2}$/;
   if (d.test(q.from || '')) { w.push('substr(created_at,1,10) >= ?'); p.push(q.from); }

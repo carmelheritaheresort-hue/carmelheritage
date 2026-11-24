@@ -22,6 +22,23 @@ Everything below is either empty, hidden, or filled with cautious wording. None 
 - Check-in and check-out times (empty and hidden).
 - Meals, extra-person charges and other inclusions (not mentioned anywhere).
 
+## Ayurveda packages (added from the brochure details supplied in the upgrade brief)
+The brochure PDF itself was not received; all packages, prices and schedules were taken from the written brief and kept exactly as given. Edit them in Admin > Packages.
+- **Room prices disagree.** The brochure rates on the Ayurveda Packages page are Cottage Room ₹5,500/day and Deluxe Room ₹3,000/day. The online booking and Stay pages use ₹4,500 (cottage) and ₹1,500 (standard room) per night plus 5% GST, as supplied earlier. Decide which is correct; until then guests see both.
+- **"Deluxe Room" vs "Standard Room".** The brochure says Deluxe Room; the website calls the 7 tiled rooms Standard Rooms. The Deluxe Room card uses the standard room photo. Confirm they are the same rooms.
+- Whether brochure prices include GST, and whether package prices are per person or per package.
+- **Schedules that do not add up** (kept as supplied):
+  - One session per day, 15 Days Package: the schedule lists 14 days (3+3+3+3+2).
+  - Two sessions per day: listed treatment-days do not equal 2 × the package length: 1 Day (3 vs 2), 3 Days (7 vs 6), 5 Days (11 vs 10), 7 Days (16 vs 14), 10 Days (22 vs 20), 14 Days (31 vs 28), 21 Days (39 vs 42).
+- **Spellings kept as in each brochure section:** Udvrithanam (one-session 21 days) vs Udvarthanam (two-session 21 days and the treatment list); Sirodhara vs Shirodhara; Abhyanga vs Abhyangam; Eye Treatment vs Eye Therapy; Steam vs Herbal Steam vs Herbal Steam Bath; Face Pack vs Herbal Facial.
+- Kayapalanalam, Ayushmanbhava and Niramaya are listed as "1 hour". Confirm this is the session length.
+- **Treatment descriptions** (Admin > Treatments) describe only what each treatment involves. They were written for the site and need owner approval. No benefits or outcomes are claimed.
+- **Treatment photos:** none supplied. Cards show the leaf emblem until photos are uploaded in Admin > Treatments.
+- Featured package photos on the homepage reuse property photos (treatment room, verandah, driveway, the Centre in the mist). Upload package photos in Admin > Packages if preferred.
+- The Ayurvedic Diet Food card uses the dining photo from the gallery.
+- **Address spelling:** the brochure says "Boothathankettu"; the site uses "Bhoothathankettu" as supplied originally. Confirm the correct spelling (Admin > Settings).
+- **Map:** the brief asks for a Google Map of the verified location. The map stays hidden until the pin is confirmed and entered in Admin > Settings > Location.
+
 ## Online booking and payments
 - Prices supplied by the owner: cottage Rs 4,500 and standard room Rs 1,500 per unit per night, plus GST. Confirm whether this is per room regardless of guests, and whether rates change by season or for extra guests.
 - GST is set to 5% (the rate for rooms up to Rs 7,500 a night from 22 September 2025). Confirm with the Centre's accountant, and check the Centre is GST-registered.

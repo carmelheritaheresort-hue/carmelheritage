@@ -5,7 +5,7 @@
   <div class="field"><label for="status">Status</label>
     <select id="status" name="status"><option value="">Any</option><% STATUSES.forEach(function (s) { %><option value="<%= s %>"<%= q.status === s ? ' selected' : '' %>><%= s %></option><% }) %></select></div>
   <div class="field"><label for="type">Type</label>
-    <select id="type" name="type"><option value="">Any</option><option value="stay"<%= q.type === 'stay' ? ' selected' : '' %>>Stay</option><option value="treatment"<%= q.type === 'treatment' ? ' selected' : '' %>>Treatment</option></select></div>
+    <select id="type" name="type"><option value="">Any</option><option value="stay"<%= q.type === 'stay' ? ' selected' : '' %>>Stay</option><option value="treatment"<%= q.type === 'treatment' ? ' selected' : '' %>>Treatment</option><option value="package"<%= q.type === 'package' ? ' selected' : '' %>>Package</option></select></div>
   <div class="field"><label for="pref">Accommodation</label>
     <select id="pref" name="pref"><option value="">Any</option><% PREFS.forEach(function (p) { %><option value="<%= p %>"<%= q.pref === p ? ' selected' : '' %>><%= p %></option><% }) %></select></div>
   <div class="field"><label for="from">Received from</label><input id="from" type="date" name="from" value="<%= q.from || '' %>"></div>
@@ -26,7 +26,7 @@
         <td><a href="/admin/enquiries/<%= e.id %>"><%= e.name %></a></td>
         <td><%= e.phone %></td>
         <td><%= e.check_in %><%= e.check_out ? ' to ' + e.check_out : '' %></td>
-        <td><%= e.accommodation_pref %><%= e.units ? ' x' + e.units : '' %></td>
+        <td><%= e.type === 'stay' ? e.accommodation_pref + (e.units ? ' x' + e.units : '') : (e.treatment || '-') %></td>
         <td><span class="badge s-<%= e.status %>"><%= e.status %></span></td>
       </tr>
     <% }) %>

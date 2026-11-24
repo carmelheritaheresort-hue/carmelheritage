@@ -1,0 +1,36 @@
+<%
+  // Params: stayCards [{ title, rate, unit, src, alt, href, cta, external }], stayGallery [{ image, alt, caption }]
+%>
+<section class="section bg-parchment" id="stay-experience" aria-labelledby="stayx-h">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow">Accommodation and food</p>
+      <h2 id="stayx-h">Stay &amp; <em>Experience</em></h2>
+      <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+      <p class="lead">Daily rates for rooms and Ayurvedic diet food. These are charged separately from the treatment packages.</p>
+    </div>
+    <div class="stay-cards">
+      <% stayCards.forEach(function (c) { %>
+        <article class="tile stay-card reveal">
+          <div class="tile-media">
+            <% if (c.src) { %><%- img(c.src, c.alt) %><% } else { %><div class="ph" aria-hidden="true"><img src="/img/logo-emblem-gold.png" alt="" width="256" height="253"></div><% } %>
+          </div>
+          <h3><%= c.title %></h3>
+          <p class="stay-rate"><strong><%= c.rate %></strong> <span>/ <%= c.unit %></span></p>
+          <div class="btn-row">
+            <a class="btn btn-outline btn-sm" href="<%= c.href %>"<%- c.external ? ' target="_blank" rel="noopener" data-track="WhatsApp Click"' : '' %>><%= c.cta %><span class="sr-only"> about <%= c.title %><%= c.external ? ' (opens in a new tab)' : '' %></span></a>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+    <p class="small center mt">Rates are per day. The Centre confirms availability and the rate for your dates.</p>
+    <% if (stayGallery.length) { %>
+      <ul class="stay-gallery">
+        <% stayGallery.forEach(function (g) { %>
+          <li><figure><%- img(g.image, g.alt) %><% if (g.caption) { %><figcaption><%= g.caption %></figcaption><% } %></figure></li>
+        <% }) %>
+      </ul>
+      <div class="btn-row center"><a class="btn btn-outline" href="/gallery">View the gallery</a> <a class="btn btn-outline" href="/stay">About our rooms</a></div>
+    <% } %>
+  </div>
+</section>

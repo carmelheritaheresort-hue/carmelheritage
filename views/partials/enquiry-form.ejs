@@ -1,9 +1,16 @@
 <%
+  // Params: formId, formMode ('stay' | 'treatment' | 'package'), formPref, formTreatment, formPackage (id), packages (list)
   const fid = formId;
   const isStay = formMode === 'stay';
+  const isPkg = formMode === 'package';
   const pref = locals.formPref || 'either';
   const trt = locals.formTreatment || '';
   const treatmentList = locals.treatments || [];
+  const pkgList = locals.packages || [];
+  const pkgSel = pkgList.find(function (p) { return String(p.id) === String(locals.formPackage || ''); }) || null;
+  const confirmWhat = isStay ? 'availability and the applicable rate'
+    : isPkg ? 'availability and the booking procedure'
+    : 'whether the treatment is suitable and available, and the applicable rate';
 %>
 <div class="enquiry" data-enquiry>
 <form class="enquiry-form" id="<%= fid %>" data-enquiry-form data-mode="<%= formMode %>" data-site="<%= s.site_name %>"
@@ -15,6 +22,53 @@
   <input type="hidden" name="type" value="<%= formMode %>">
 
   <div class="form-grid">
+    <% if (isPkg) { %>
+    <div class="field">
+      <label for="<%= fid %>-name">Full name <span class="req">(required)</span></label>
+      <input id="<%= fid %>-name" name="name" type="text" autocomplete="name" required maxlength="100" aria-describedby="<%= fid %>-name-err">
+      <p class="err" id="<%= fid %>-name-err" data-err-for="name" hidden></p>
+    </div>
+    <div class="field">
+      <label for="<%= fid %>-phone">WhatsApp number <span class="req">(required)</span></label>
+      <input id="<%= fid %>-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required maxlength="30" placeholder="+91 ..." aria-describedby="<%= fid %>-phone-hint <%= fid %>-phone-err">
+      <p class="hint" id="<%= fid %>-phone-hint">Include the country code, for example +91.</p>
+      <p class="err" id="<%= fid %>-phone-err" data-err-for="phone" hidden></p>
+    </div>
+    <div class="field full">
+      <label for="<%= fid %>-package">Selected package <span class="req">(required)</span></label>
+      <select id="<%= fid %>-package" name="package_id" required data-package-select aria-describedby="<%= fid %>-package-err">
+        <option value=""<%= pkgSel ? '' : ' selected' %>>Choose a package</option>
+        <% ['single', 'double'].forEach(function (cat) { const group = pkgList.filter(function (p) { return p.category === cat; }); if (!group.length) return; %>
+          <optgroup label="<%= group[0].categoryLabel %>">
+            <% group.forEach(function (p) { %><option value="<%= p.id %>" data-name="<%= p.label %>" data-duration="<%= p.duration %>" data-price="<%= p.priceText %>"<%= pkgSel && pkgSel.id === p.id ? ' selected' : '' %>><%= p.label %>: <%= p.priceText %></option><% }) %>
+          </optgroup>
+        <% }) %>
+      </select>
+      <p class="err" id="<%= fid %>-package-err" data-err-for="package_id" hidden></p>
+    </div>
+    <div class="field">
+      <label for="<%= fid %>-pkg-duration">Package duration</label>
+      <input id="<%= fid %>-pkg-duration" type="text" readonly tabindex="-1" data-package-duration value="<%= pkgSel ? pkgSel.duration : '' %>" placeholder="Choose a package">
+    </div>
+    <div class="field">
+      <label for="<%= fid %>-pkg-price">Package price</label>
+      <input id="<%= fid %>-pkg-price" type="text" readonly tabindex="-1" data-package-price value="<%= pkgSel ? pkgSel.priceText : '' %>" placeholder="Choose a package">
+    </div>
+    <div class="field">
+      <label for="<%= fid %>-check_in">Preferred arrival date <span class="opt">(optional)</span></label>
+      <input id="<%= fid %>-check_in" name="check_in" type="date" min="<%= fc.today %>" aria-describedby="<%= fid %>-check_in-err">
+      <p class="err" id="<%= fid %>-check_in-err" data-err-for="check_in" hidden></p>
+    </div>
+    <div class="field">
+      <label for="<%= fid %>-adults">Number of guests <span class="req">(required)</span></label>
+      <input id="<%= fid %>-adults" name="adults" type="number" inputmode="numeric" min="1" max="30" value="1" required aria-describedby="<%= fid %>-adults-err">
+      <p class="err" id="<%= fid %>-adults-err" data-err-for="adults" hidden></p>
+    </div>
+    <div class="field full">
+      <label for="<%= fid %>-message">Additional requirements <span class="opt">(optional)</span></label>
+      <textarea id="<%= fid %>-message" name="message" rows="3" maxlength="1000" placeholder="For example accommodation, diet food, or questions about the treatments"></textarea>
+    </div>
+    <% } else { %>
     <% if (isStay) { %>
     <div class="field quarter">
       <label for="<%= fid %>-check_in">Check-in <span class="req">(required)</span></label>
@@ -83,10 +137,11 @@
       <label for="<%= fid %>-message">Message <span class="opt">(optional)</span></label>
       <textarea id="<%= fid %>-message" name="message" rows="3" maxlength="1000"></textarea>
     </div>
+    <% } %>
   </div>
 
   <div class="form-foot">
-    <p class="note">This is an <strong>enquiry</strong>, not a confirmed booking. The Centre must confirm <%= isStay ? 'availability and the applicable rate' : 'whether the treatment is suitable and available, and the applicable rate' %>. See our <a href="/privacy-policy">Privacy Policy</a>.</p>
+    <p class="note">This is an <strong>enquiry</strong>, not a confirmed booking. The Centre will reply to confirm <%= confirmWhat %>. See our <a href="/privacy-policy">Privacy Policy</a>.</p>
     <button class="btn btn-whatsapp btn-lg" type="submit">Send via WhatsApp</button>
   </div>
   <noscript><p class="note">This form needs JavaScript. Please call <a href="<%= tel(phones[0] || '') %>"><%= phones[0] %></a> or message us on <a href="<%= waLink() %>">WhatsApp</a>.</p></noscript>
@@ -95,8 +150,8 @@
 <div class="enquiry-success" data-success hidden tabindex="-1" role="status" aria-live="polite">
   <h2 class="h3" data-success-title>One more step: send the message in WhatsApp</h2>
   <p data-success-opened>We opened WhatsApp with your enquiry written out. <strong>Press send in WhatsApp</strong> to deliver it to the Centre.</p>
-  <p data-success-blocked hidden><strong>WhatsApp did not open.</strong> Your details are kept below. Copy the message and send it on WhatsApp, or contact the Centre by phone or email.</p>
-  <p>This is an enquiry, not a confirmed booking. The Centre must confirm <%= isStay ? 'availability and the applicable rate' : 'suitability, availability and the applicable rate' %> before anything is arranged.</p>
+  <p data-success-blocked hidden><strong>WhatsApp did not open.</strong> Your details are kept below. Copy the message and send it on WhatsApp, or contact the Centre by phone<%= s.contact_email ? ' or email' : '' %>.</p>
+  <p>This is an enquiry, not a confirmed booking. Nothing is booked until the Centre replies to confirm <%= confirmWhat %>.</p>
   <label for="<%= fid %>-copytext">Your enquiry message</label>
   <textarea id="<%= fid %>-copytext" class="copy-text" data-copy-text rows="9" readonly></textarea>
   <div class="btn-row">

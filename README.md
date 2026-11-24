@@ -111,6 +111,14 @@ All settings that change often live in **Admin > Settings**. Server values come 
 - Payment is verified on the server (checkout signature) and through the webhook (events `order.paid`, `payment.failed`). Prices are always recalculated on the server.
 - Availability counts paid and confirmed bookings plus **Admin > Bookings > Block rooms**. Enter phone, walk-in and WhatsApp bookings there.
 
+## Ayurveda packages
+
+- `/ayurveda-packages`: 9 one-session-per-day and 7 two-sessions-per-day packages with duration, price, an expandable schedule, **Book now** and **WhatsApp**; a **Stay & Experience** section with daily rates for Cottage Room, Deluxe Room and Ayurvedic Diet Food; contact buttons.
+- Packages live in the `packages` table and are edited in **Admin > Packages** (name, category, duration, price, schedule lines, featured, photo). "Featured" packages appear on the homepage. The original brochure data is in `src/data/brochure.js`, used once by migration 2.
+- The Stay & Experience rates and the diet food photo are in **Admin > Settings > Ayurveda packages page**.
+- **Book now** opens `/enquiry?type=package&package=<id>` with the package, duration and price filled in. Sending opens WhatsApp with the agreed message template and saves a copy under **Admin > Enquiries** (type "package"). The server takes the package name and price from the database, never from the browser.
+- `/treatments` shows the 12 treatments (Admin > Treatments, with optional photos).
+
 ## Guest profiles
 
 - **Admin > Guests** lists every guest with mobile, email, bookings, nights, largest party, booking value, last and next stay, and enquiries. Filters: returning (2+ bookings), upcoming stay, enquiries only. Export as CSV.

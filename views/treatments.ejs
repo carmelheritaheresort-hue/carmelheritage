@@ -1,33 +1,21 @@
 <%- include('partials/head') %>
 <%- include('partials/header') %>
 <main id="main">
-  <%- include('partials/page-hero', { heroEyebrow: 'Ayurveda', heroTitle: 'Ayurveda <em>treatments</em>', heroLead: 'Classical Ayurvedic medicines, treatments and therapies.', heroImage: s.treatments_image, heroAlt: s.treatments_image_alt }) %>
-  <section class="section">
+  <%- include('partials/page-hero', { heroEyebrow: 'Ayurveda in Kothamangalam', heroTitle: 'Ayurveda <em>treatments</em>', heroLead: 'Classical Ayurvedic medicines, treatments and therapies at Bhoothathankettu, near Kothamangalam.', heroImage: s.treatments_image, heroAlt: s.treatments_image_alt }) %>
+  <section class="section" aria-labelledby="our-trt-h">
     <div class="container">
       <div class="section-head">
+        <p class="eyebrow">Kerala Ayurveda</p>
+        <h2 id="our-trt-h">Our Ayurvedic <em>Treatments</em></h2>
+        <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
         <p class="lead"><%= s.treatments_intro %></p>
       </div>
       <% if (treatments.length) { %>
-        <div class="tiles">
-          <% treatments.forEach(function (t) {
-               const q = 'Hello ' + s.site_name + ', I\u2019d like to ask about ' + t.name + '. Please let me know whether it is suitable and available, and confirm the applicable rate.'; %>
-            <article class="tile" id="treatment-<%= t.id %>">
-              <h2><%= t.name %></h2>
-              <% if (t.summary) { %><p><strong><%= t.summary %></strong></p><% } %>
-              <%- renderText(t.description) %>
-              <% if (t.duration || t.price || t.practitioner) { %>
-              <dl class="facts">
-                <% if (t.duration) { %><dt>Duration</dt><dd><%= t.duration %></dd><% } %>
-                <% if (t.price) { %><dt>Price</dt><dd><%= t.price %></dd><% } %>
-                <% if (t.practitioner) { %><dt>Practitioner</dt><dd><%= t.practitioner %></dd><% } %>
-              </dl>
-              <% } %>
-              <div class="btn-row">
-                <a class="btn btn-whatsapp btn-sm" href="<%= waLink(q) %>" target="_blank" rel="noopener" data-track="WhatsApp Click">WhatsApp<span class="sr-only"> about <%= t.name %></span></a>
-                <a class="btn btn-outline btn-sm" href="/enquiry?type=treatment&amp;treatment=<%= encodeURIComponent(t.name) %>">Enquire<span class="sr-only"> about <%= t.name %></span></a>
-              </div>
-            </article>
-          <% }) %>
+        <div class="tiles trt-grid">
+          <% treatments.forEach(function (t) { %><%- include('partials/treatment-card', { t: t, headingTag: 'h3' }) %><% }) %>
+        </div>
+        <div class="btn-row center mt">
+          <a class="btn btn-primary" href="/ayurveda-packages">View treatment packages and prices</a>
         </div>
       <% } else { %>
         <div class="empty-state">

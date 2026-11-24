@@ -31,19 +31,28 @@ function page(req, res, view, meta, data = {}) {
 
 const get = (path, fn) => router.get(path, wrap(fn));
 
+// Property photos used on featured package cards that have no photo of their own.
+function fallbackImages(s) {
+  return [['ayurveda_image', 'ayurveda_image_alt'], ['stay_image', 'stay_image_alt'], ['about_image', 'about_image_alt'], ['intro_image', 'intro_image_alt'], ['hero_image', 'hero_image_alt']]
+    .filter(([k]) => s[k]).map(([k, a]) => ({ src: s[k], alt: s[a] || '' }));
+}
+
 get('/', async (req, res) => {
   const s = res.locals.s;
-  const [types, faqs, treatments, gallery, facilities, testimonials] = await Promise.all([
+  const [types, faqs, treatments, gallery, facilities, testimonials, pkgs] = await Promise.all([
     content.accommodation(), content.faqs(), content.approved('treatments'), content.approved('gallery'),
-    content.approved('facilities'), content.testimonials()
+    content.approved('facilities'), content.testimonials(), content.packages()
   ]);
+  const imgs = fallbackImages(s);
+  const featured = pkgs.filter(p => p.featured).slice(0, 4)
+    .map((p, i) => ({ pkg: p, media: p.photo ? { src: p.photo, alt: p.photo_alt } : (imgs[i % (imgs.length || 1)] || { src: '', alt: '' }) }));
   page(req, res, 'home', {
     title: `${s.site_name} | Ayurveda and Stay at Bhoothathankettu`,
     description: `${s.org_name}, Bhoothathankettu, Kothamangalam, Kerala. Explore 8 cottages, 7 standard rooms and Ayurveda treatments, and book your stay online.`,
     jsonld: [seo.businessLd(s, res.locals.address), seo.websiteLd(s), ...(faqs.length ? [seo.faqLd(faqs)] : [])]
   }, {
     types, faqs, treatments: treatments.slice(0, 4), allTreatments: treatments,
-    facilities, gallery: gallery.slice(0, 6), testimonials,
+    facilities, gallery: gallery.slice(0, 6), testimonials, featured,
     fromPrice: Math.min(...types.map(t => t.price_per_night || Infinity)),
     fc: content.formContext(types)
   });
@@ -86,10 +95,31 @@ get('/stay/standard-rooms', stayDetail('standard-rooms', 'Standard Rooms'));
 get('/treatments', async (req, res) => {
   const s = res.locals.s;
   page(req, res, 'treatments', {
-    title: `Ayurveda Treatments | ${s.site_name}`,
-    description: `Classical Ayurvedic medicines, treatments and therapies at ${s.site_name}, Bhoothathankettu. Contact the Centre to ask what is suitable for you.`,
+    title: `Ayurveda Treatment in Kothamangalam | Our Ayurvedic Treatments | ${s.site_name}`,
+    description: `Abhyangam, Sirodhara, Elakizhi, Njavarakizhi, Pizhichil and other classical Kerala Ayurvedic treatments at ${s.site_name}, Bhoothathankettu, Kothamangalam.`,
     crumbs: [{ name: 'Treatments', path: '/treatments' }]
   }, { treatments: await content.approved('treatments') });
+});
+
+get('/ayurveda-packages', async (req, res) => {
+  const s = res.locals.s;
+  const [pkgs, types, gallery] = await Promise.all([content.packages(), content.accommodation(), content.approved('gallery')]);
+  const groups = { single: pkgs.filter(p => p.category === 'single'), double: pkgs.filter(p => p.category === 'double') };
+  const cottage = types.find(t => t.kind === 'cottage') || {}, standard = types.find(t => t.kind === 'standard_room') || {};
+  const perDay = k => content.inr(s[k]);
+  const stayCards = [
+    { title: 'Cottage Room', rate: perDay('rate_cottage'), unit: 'day', src: cottage.photo, alt: cottage.photo_alt, href: '/enquiry?stay=cottage', cta: 'Enquire' },
+    { title: 'Deluxe Room', rate: perDay('rate_deluxe'), unit: 'day', src: standard.photo, alt: standard.photo_alt, href: '/enquiry?stay=standard', cta: 'Enquire' },
+    { title: 'Ayurvedic Diet Food', rate: perDay('rate_diet_food'), unit: 'day', src: s.diet_food_image, alt: s.diet_food_image_alt, external: true,
+      href: res.locals.waLink(`Hello ${s.site_name}, I\u2019d like to ask about Ayurvedic diet food during my stay.`), cta: 'Ask on WhatsApp' }
+  ];
+  const stayGallery = gallery.filter(g => /^(cottage|standard)/i.test(g.caption || '')).slice(0, 6);
+  page(req, res, 'packages', {
+    title: `Ayurveda Treatment Packages Kerala | Wellness Retreat Kothamangalam | ${s.site_name}`,
+    description: `Kerala Ayurvedic wellness packages at ${s.site_name}, Kothamangalam: ${pkgs.length} treatment programmes from 1 hour to 21 days, with prices, schedules and WhatsApp booking enquiry.`,
+    crumbs: [{ name: 'Ayurveda Packages', path: '/ayurveda-packages' }],
+    jsonld: pkgs.length ? [seo.packagesLd(s, pkgs)] : []
+  }, { groups, stayCards, stayGallery });
 });
 
 get('/facilities', async (req, res) => {
@@ -121,27 +151,30 @@ get('/gallery', async (req, res) => {
 
 get('/contact', async (req, res) => {
   const s = res.locals.s;
+  const [types, treatments] = await Promise.all([content.accommodation(), content.approved('treatments')]);
   page(req, res, 'contact', {
-    title: `Contact and Directions | ${s.site_name}`,
-    description: `Contact ${s.site_name}: ${res.locals.address}. Call or message on WhatsApp to enquire about a stay or treatment.`,
+    title: `Contact and Directions | Ayurveda Wellness Centre Kothamangalam | ${s.site_name}`,
+    description: `Contact ${s.site_name}: ${res.locals.address}. Call, message on WhatsApp or send an enquiry about Ayurveda treatments, packages or your stay.`,
     crumbs: [{ name: 'Contact and Directions', path: '/contact' }],
     jsonld: [seo.businessLd(s, res.locals.address)]
-  });
+  }, { treatments, withForm: true, fc: content.formContext(types) });
 });
 
 get('/enquiry', async (req, res) => {
   const s = res.locals.s;
-  const [types, treatments] = await Promise.all([content.accommodation(), content.approved('treatments')]);
-  const mode = req.query.type === 'treatment' ? 'treatment' : 'stay';
+  const [types, treatments, packages] = await Promise.all([content.accommodation(), content.approved('treatments'), content.packages()]);
+  const mode = ['treatment', 'package'].includes(req.query.type) ? req.query.type : 'stay';
   const pref = ['cottage', 'standard', 'either'].includes(req.query.stay) ? req.query.stay : 'either';
+  const formPackage = /^\d{1,9}$/.test(String(req.query.package || '')) ? Number(req.query.package) : '';
+  const titles = { stay: 'Booking Enquiry', treatment: 'Treatment Enquiry', package: 'Package Booking Enquiry' };
   page(req, res, 'enquiry', {
-    title: `Booking Enquiry | ${s.site_name}`,
-    description: `Send a stay or treatment enquiry to ${s.site_name} on WhatsApp. The Centre confirms availability and rates.`,
+    title: `${titles[mode]} | ${s.site_name}`,
+    description: `Send a stay, treatment or Ayurveda package enquiry to ${s.site_name} on WhatsApp. The Centre confirms availability.`,
     noindex: true,
-    crumbs: [{ name: 'Booking Enquiry', path: '/enquiry' }]
+    crumbs: [{ name: titles[mode], path: '/enquiry' }]
   }, {
-    mode, pref, prefTreatment: String(req.query.treatment || '').slice(0, 150),
-    treatments, withForm: true, fc: content.formContext(types)
+    mode, pref, prefTreatment: String(req.query.treatment || '').slice(0, 150), formPackage,
+    treatments, packages, withForm: true, fc: content.formContext(types)
   });
 });
 
@@ -208,7 +241,7 @@ function policy(path, key, title, descFn, crumb) {
 policy('/privacy-policy', 'privacy_body', 'Privacy Policy', n => `How ${n} collects, uses and keeps the details you send in an enquiry.`, 'Privacy Policy');
 policy('/booking-cancellation-policy', 'policy_body', 'Booking and Cancellation Policy', n => `How online bookings, confirmations and cancellations work at ${n}.`, 'Booking and Cancellation Policy');
 
-const SITEMAP = ['/', '/about', '/stay', '/stay/cottages', '/stay/standard-rooms', '/treatments', '/facilities', '/management', '/gallery', '/contact', '/privacy-policy', '/booking-cancellation-policy'];
+const SITEMAP = ['/', '/about', '/stay', '/stay/cottages', '/stay/standard-rooms', '/treatments', '/ayurveda-packages', '/facilities', '/management', '/gallery', '/contact', '/privacy-policy', '/booking-cancellation-policy'];
 
 router.get('/sitemap.xml', (req, res) => {
   if (!res.locals.s.site_live) return res.status(404).type('text/plain').send('Not found');

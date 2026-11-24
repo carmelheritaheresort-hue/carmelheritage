@@ -3,13 +3,13 @@ const { getSettings, whatsappNumber, digits } = require('./settings');
 const { esc, renderText, lines, fmtDate, jsonLd, isHttpUrl } = require('./util');
 const { rupees } = require('../public/js/booking-calc.js');
 
+// Facilities and Management sit under About so the main menu fits on one line on laptops.
 const NAV = [
   { name: 'Home', path: '/' },
-  { name: 'About', path: '/about' },
-  { name: 'Stay', path: '/stay', children: [{ name: 'Cottages', path: '/stay/cottages' }, { name: 'Standard Rooms', path: '/stay/standard-rooms' }] },
+  { name: 'About', path: '/about', children: [{ name: 'About the Centre', path: '/about' }, { name: 'Facilities', path: '/facilities' }, { name: 'Management', path: '/management' }] },
   { name: 'Treatments', path: '/treatments' },
-  { name: 'Facilities', path: '/facilities' },
-  { name: 'Management', path: '/management' },
+  { name: 'Ayurveda Packages', path: '/ayurveda-packages' },
+  { name: 'Stay', path: '/stay', children: [{ name: 'Cottages', path: '/stay/cottages' }, { name: 'Standard Rooms', path: '/stay/standard-rooms' }, { name: 'Book Online', path: '/book' }] },
   { name: 'Gallery', path: '/gallery' },
   { name: 'Contact', path: '/contact' }
 ];

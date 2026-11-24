@@ -20,7 +20,7 @@
   function validate(raw, opts) {
     opts = opts || {};
     var today = opts.today;
-    var type = raw.type === 'treatment' ? 'treatment' : 'stay';
+    var type = raw.type === 'treatment' || raw.type === 'package' ? raw.type : 'stay';
     var errors = {};
     var d = {
       type: type,
@@ -51,6 +51,23 @@
       if (PREFS.indexOf(d.accommodation_pref) === -1) errors.accommodation_pref = 'Choose cottage, standard room or either.';
       var max = (opts.maxUnits && opts.maxUnits[d.accommodation_pref]) || 15;
       if (!(d.units >= 1 && d.units <= max)) errors.units = 'Enter between 1 and ' + max + ' units.';
+    } else if (type === 'package') {
+      // opts.packages: { id: { name, duration, priceText } }. The server builds it from the database,
+      // so a guest cannot change the package name or price that the Centre sees.
+      d.package_id = int(raw.package_id);
+      var pk = opts.packages && opts.packages[d.package_id];
+      if (!pk) errors.package_id = 'Choose a package.';
+      else {
+        d.package = { name: pk.name, duration: pk.duration, priceText: pk.priceText };
+        d.treatment = (pk.name + ' | ' + pk.duration + ' | ' + pk.priceText).slice(0, 150);
+      }
+      d.check_in = clean(raw.check_in, 10);
+      if (d.check_in) {
+        if (!isDate(d.check_in)) errors.check_in = 'Enter a valid date or leave it empty.';
+        else if (today && d.check_in < today) errors.check_in = 'The arrival date cannot be in the past.';
+      }
+      d.adults = int(raw.adults);
+      if (!(d.adults >= 1 && d.adults <= 30)) errors.adults = 'Enter the number of guests (1 to 30).';
     } else {
       d.treatment = clean(raw.treatment, 150);
       d.check_in = clean(raw.check_in, 10);
@@ -70,7 +87,23 @@
   function buildMessage(d, siteName) {
     var brand = siteName || 'Carmel Heritage';
     var lines;
-    if (d.type === 'treatment') {
+    if (d.type === 'package') {
+      var p = d.package || {};
+      lines = [
+        'Hello ' + brand + ',', '',
+        'I am interested in booking an Ayurvedic treatment package.', '',
+        'Name: ' + d.name,
+        'WhatsApp Number: ' + d.phone,
+        'Selected Package: ' + (p.name || ''),
+        'Duration: ' + (p.duration || ''),
+        'Package Price: ' + (p.priceText || ''),
+        'Preferred Arrival Date: ' + (d.check_in ? fmtDate(d.check_in) : 'Not specified'),
+        'Number of Guests: ' + d.adults,
+        'Additional Requirements: ' + (d.message || 'None'), '',
+        'Please share the availability and booking procedure.', '',
+        'Thank you.'
+      ];
+    } else if (d.type === 'treatment') {
       lines = [
         'Hello ' + brand + ', I\u2019d like to enquire about a treatment.', '',
         'Name: ' + d.name,

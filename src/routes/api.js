@@ -34,19 +34,20 @@ router.post('/enquiries', limiter, express.json({ limit: '10kb' }), wrap(async (
   // Spam traps: hidden field must be empty and the form must have been open for a moment.
   if (b.website || Number(b.elapsed) < 1500) return res.json({ ok: true });
 
-  let maxUnits;
+  let maxUnits, packages;
   try { maxUnits = content.formContext(await content.accommodation()).maxUnits; } catch { maxUnits = undefined; }
-  const result = validate(b, { today: todayIST(), maxUnits });
+  if (b.type === 'package') packages = content.packageMap(await content.packages());
+  const result = validate(b, { today: todayIST(), maxUnits, packages });
   if (!result.ok) return res.status(400).json({ ok: false, errors: result.errors });
 
   const d = result.clean;
   const now = new Date().toISOString();
   try {
     const id = await db.insert(`INSERT INTO enquiries
-      (type,status,name,phone,email,check_in,check_out,adults,children,accommodation_pref,units,treatment,message,created_at,updated_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      (type,status,name,phone,email,check_in,check_out,adults,children,accommodation_pref,units,treatment,message,package_id,created_at,updated_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       d.type, 'new', d.name, d.phone, d.email, d.check_in || '', d.check_out || '',
-      d.adults || 0, d.children || 0, d.accommodation_pref || '', d.units || 0, d.treatment || '', d.message, now, now);
+      d.adults || 0, d.children || 0, d.accommodation_pref || '', d.units || 0, d.treatment || '', d.message, d.package_id || null, now, now);
     await guests.attach('enquiries', { id, name: d.name, phone: d.phone, email: d.email, created_at: now }, 'enquiry');
     const s = await getSettings();
     // Awaited: a serverless function may be frozen as soon as the response is sent.

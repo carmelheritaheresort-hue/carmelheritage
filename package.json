@@ -16,6 +16,7 @@
     "create-admin": "node scripts/create-admin.js",
     "import-sqlite": "node scripts/import-from-sqlite.js",
     "setup-supabase": "node scripts/setup-supabase.js",
+    "backup": "node scripts/backup.js",
     "vercel-env": "node scripts/vercel-env.js"
   },
   "dependencies": {

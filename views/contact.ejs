@@ -17,6 +17,8 @@
         </ul>
         <div class="btn-row">
           <a class="btn btn-whatsapp" href="<%= waLink('Hello ' + s.site_name + ', I\u2019d like to make an enquiry.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">Chat on WhatsApp</a>
+          <a class="btn btn-outline" href="<%= tel(phones[0] || '') %>" data-track="Call Click">Call now</a>
+          <a class="btn btn-outline" href="#enquiry-form">Send an enquiry</a>
           <a class="btn btn-primary" href="/book">Book your stay</a>
         </div>
       </div>
@@ -34,6 +36,20 @@
           <div class="frame"><div class="frame-inner map"><iframe title="Map showing the location of <%= s.site_name %>" src="<%= mapEmbed %>" loading="lazy" referrerpolicy="no-referrer-when-downgrade" width="600" height="420"></iframe></div></div>
         <% } %>
       </div>
+    </div>
+  </section>
+  <section class="section bg-parchment" id="enquiry-form" aria-labelledby="cform-h">
+    <div class="container narrow">
+      <div class="section-head">
+        <p class="eyebrow">Enquiry</p>
+        <h2 id="cform-h">Send an <em>enquiry</em></h2>
+        <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+        <p class="lead">Ask about treatments, packages or your stay. WhatsApp opens with your message ready to send.</p>
+      </div>
+      <div class="form-card">
+        <%- include('partials/enquiry-form', { formId: 'contact-form', formMode: 'treatment' }) %>
+      </div>
+      <p class="small center mt">To enquire about a specific package, use the <a href="/ayurveda-packages">Ayurveda Packages</a> page. To book a room online, see <a href="/book">Book your stay</a>.</p>
     </div>
   </section>
 </main>

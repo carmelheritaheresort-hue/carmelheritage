@@ -19,6 +19,7 @@
         <li><a href="/stay/cottages">Cottages</a></li>
         <li><a href="/stay/standard-rooms">Standard Rooms</a></li>
         <li><a href="/treatments">Treatments</a></li>
+        <li><a href="/ayurveda-packages">Ayurveda Packages</a></li>
         <li><a href="/facilities">Facilities</a></li>
         <li><a href="/management">Management</a></li>
         <li><a href="/gallery">Gallery</a></li>
@@ -30,6 +31,7 @@
         <li><a href="/book">Book Your Stay</a></li>
         <li><a href="/enquiry">Booking Enquiry</a></li>
         <li><a href="/enquiry?type=treatment">Treatment Enquiry</a></li>
+        <li><a href="/enquiry?type=package">Package Enquiry</a></li>
         <li><a href="/contact">Contact and Directions</a></li>
         <li><a href="/booking-cancellation-policy">Booking and Cancellation Policy</a></li>
         <li><a href="/privacy-policy">Privacy Policy</a></li>
@@ -52,6 +54,10 @@
     <span>Online bookings are confirmed by the Centre after payment. WhatsApp enquiries are not bookings.</span>
   </div>
 </footer>
+
+<a class="wa-float" href="<%= waLink('Hello ' + s.site_name + ', I\u2019d like to make an enquiry.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">
+  <img src="/img/icon-chat.svg" alt="" width="26" height="26"><span>WhatsApp us</span><span class="sr-only"> (opens in a new tab)</span>
+</a>
 
 <div class="mobile-bar" role="group" aria-label="Quick contact">
   <a class="btn btn-whatsapp" href="<%= waLink('Hello ' + s.site_name + ', I\u2019d like to make an enquiry.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">WhatsApp</a>
