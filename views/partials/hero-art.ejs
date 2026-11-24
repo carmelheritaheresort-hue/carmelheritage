@@ -1,3 +1,19 @@
+<% const slides = locals.heroSlides || []; %>
+<% if (slides.length > 1) { %>
+<figure class="hero-media hero-slides" data-slideshow data-hold="<%= s.hero_slide_seconds %>" data-fade="<%= s.hero_fade_seconds %>">
+  <% slides.forEach(function (sl, i) { %>
+    <% if (i === 0) { %>
+      <img class="hs-slide is-on kb-0" src="<%= sl.src %>" alt="<%= sl.alt %>" fetchpriority="high" decoding="async">
+    <% } else { %>
+      <img class="hs-slide kb-<%= i % 4 %>" data-src="<%= sl.src %>" alt="" decoding="async">
+    <% } %>
+  <% }) %>
+</figure>
+<button class="hs-toggle" type="button" data-slideshow-toggle aria-pressed="false" hidden>
+  <span class="hs-icon" aria-hidden="true"></span><span class="hs-label">Pause slideshow</span>
+  <span class="hs-track" aria-hidden="true"><span class="hs-progress"></span></span>
+</button>
+<% } else { %>
 <figure class="hero-media">
   <% if (s.hero_image) { %>
     <%- img(s.hero_image, s.hero_image_alt, { eager: true }) %>
@@ -6,3 +22,4 @@
     <figcaption class="illus-label">Illustration only. Not a photograph of the property.</figcaption>
   <% } %>
 </figure>
+<% } %>

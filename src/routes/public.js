@@ -43,6 +43,10 @@ get('/', async (req, res) => {
     content.accommodation(), content.faqs(), content.approved('treatments'), content.approved('gallery'),
     content.approved('facilities'), content.testimonials(), content.packages()
   ]);
+  // Hero slideshow: the hero photo first, then every approved gallery photo (no illustrations, no repeats).
+  const seen = new Set();
+  const heroSlides = [{ src: s.hero_image, alt: s.hero_image_alt }, ...gallery.filter(g => !g.is_illustration).map(g => ({ src: g.image, alt: g.alt }))]
+    .filter(x => x.src && !seen.has(x.src) && seen.add(x.src));
   const imgs = fallbackImages(s);
   const featured = pkgs.filter(p => p.featured).slice(0, 4)
     .map((p, i) => ({ pkg: p, media: p.photo ? { src: p.photo, alt: p.photo_alt } : (imgs[i % (imgs.length || 1)] || { src: '', alt: '' }) }));
@@ -53,6 +57,7 @@ get('/', async (req, res) => {
   }, {
     types, faqs, treatments: treatments.slice(0, 4), allTreatments: treatments,
     facilities, gallery: gallery.slice(0, 6), testimonials, featured,
+    heroSlides: s.hero_slideshow ? heroSlides : [],
     fromPrice: Math.min(...types.map(t => t.price_per_night || Infinity)),
     fc: content.formContext(types)
   });

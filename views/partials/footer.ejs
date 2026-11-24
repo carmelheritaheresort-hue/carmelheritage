@@ -65,6 +65,7 @@
 </div>
 
 <script src="/js/site.js" defer></script>
+<% if (locals.heroSlides && heroSlides.length > 1) { %><script src="/js/hero.js" defer></script><% } %>
 <% if (locals.withForm) { %>
 <script src="/js/validation.js" defer></script>
 <script src="/js/enquiry.js" defer></script>
