@@ -8,17 +8,22 @@ const HOLD_MINUTES = 20;
 const KINDS = ['cottage', 'standard_room'];
 const BOOKING_LOCK = 727002; // serialises "check rooms then reserve" across all server instances
 // Bookings in these states take a room. Pending ones only while their hold is valid.
-const ACTIVE_SQL = `(status IN ('paid','confirmed') OR (status = 'pending_payment' AND hold_expires_at > ?))`;
+// Booking requests (no online payment) hold their rooms until the Centre answers or the request hold runs out.
+const ACTIVE_SQL = `(status IN ('paid','confirmed') OR (status IN ('pending_payment','requested') AND hold_expires_at > ?))`;
 
 const STATUS_LABEL = {
+  requested: 'Request received, awaiting confirmation',
   pending_payment: 'Awaiting payment',
   paid: 'Paid, awaiting confirmation',
   confirmed: 'Confirmed',
   cancelled: 'Cancelled',
   refunded: 'Refunded',
   failed: 'Payment failed',
-  expired: 'Expired (not paid)'
+  expired: 'Expired'
 };
+
+// How long a booking request keeps its rooms while the Centre has not answered.
+function requestHoldHours(s) { return Math.min(168, Math.max(1, parseInt(s.request_hold_hours, 10) || 48)); }
 
 async function roomTypes() {
   const rows = await db.all('SELECT * FROM accommodation_types WHERE approved=1 ORDER BY sort_order, id');
@@ -81,9 +86,11 @@ async function newRef() {
   throw new Error('Could not create a booking reference');
 }
 
-// Validates, re-checks availability and stores a booking that is waiting for payment.
+// Validates, re-checks availability and stores a booking that is waiting for payment, or, when
+// providerName is 'request', a booking request with nothing to pay online.
 // Returns { ok, errors } or { ok, booking }.
 async function createPending(raw, s, providerName) {
+  const isRequest = providerName === 'request';
   const rooms = await roomTypes();
   const today = todayIST();
   const pre = calc.validate(raw, { today, rooms });
@@ -109,14 +116,15 @@ async function createPending(raw, s, providerName) {
       extra_adults: q.extraAdults, extra_children: q.extraChildren,
       extra_adult_rate: q.extraAdultRate, extra_child_rate: q.extraChildRate, extras_paise: q.extras,
       gst_percent: q.gstPercent,
-      subtotal_paise: q.subtotal, gst_paise: q.gst, total_paise: q.total, pay_now_paise: q.payNow,
+      subtotal_paise: q.subtotal, gst_paise: q.gst, total_paise: q.total, pay_now_paise: isRequest ? 0 : q.payNow,
       provider: providerName,
-      hold_expires_at: new Date(now.getTime() + HOLD_MINUTES * 60000).toISOString(),
+      status: isRequest ? 'requested' : 'pending_payment',
+      hold_expires_at: new Date(now.getTime() + (isRequest ? requestHoldHours(s) * 3600000 : HOLD_MINUTES * 60000)).toISOString(),
       created_at: now.toISOString(), updated_at: now.toISOString()
     };
     const cols = Object.keys(row);
     const id = await db.insert(`INSERT INTO bookings (${cols.join(',')}) VALUES (${cols.map(() => '?').join(',')})`, ...cols.map(c => row[c]));
-    return { ok: true, booking: { ...row, id, status: 'pending_payment' } };
+    return { ok: true, booking: { ...row, id } };
   });
 }
 
@@ -165,10 +173,16 @@ async function markFailed(b, reason) {
   if (r.changes && reason) await addNote(b.id, reason);
 }
 
-// Releases rooms held by unpaid bookings once the hold has run out.
+// Releases rooms held by unpaid bookings, and by requests the Centre did not answer, once the hold has run out.
 async function expireHolds() {
   const now = new Date().toISOString();
-  return (await db.run(`UPDATE bookings SET status='expired', updated_at=? WHERE status='pending_payment' AND hold_expires_at <= ?`, now, now)).changes;
+  return (await db.run(`UPDATE bookings SET status='expired', updated_at=? WHERE status IN ('pending_payment','requested') AND hold_expires_at <= ?`, now, now)).changes;
+}
+
+// Before staff confirm a booking that no longer holds rooms (cancelled or expired), check the rooms are still free.
+async function stillFits(b) {
+  const avail = await availability(b.check_in, b.check_out, b.id);
+  return b.cottage_units <= avail.cottage && b.standard_units <= avail.standard_room;
 }
 
 function publicView(b) {
@@ -192,6 +206,6 @@ function guestText(b) {
 }
 
 module.exports = {
-  HOLD_MINUTES, STATUS_LABEL, roomTypes, pricing, availability, createPending, setOrder,
+  HOLD_MINUTES, STATUS_LABEL, requestHoldHours, stillFits, roomTypes, pricing, availability, createPending, setOrder,
   byRef, byOrder, tokenOk, markPaid, markFailed, addNote, expireHolds, publicView, guestText, rupees: calc.rupees
 };

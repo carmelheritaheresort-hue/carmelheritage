@@ -380,6 +380,16 @@ ALTER TABLE bookings ADD COLUMN extra_adult_rate INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE bookings ADD COLUMN extra_child_rate INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE bookings ADD COLUMN extras_paise INTEGER NOT NULL DEFAULT 0;
 `
+  },
+  {
+    id: 4,
+    name: 'booking requests without online payment',
+    // 'requested': the guest sent a full booking with no online payment; rooms are held until the Centre answers.
+    sql: `
+ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
+ALTER TABLE bookings ADD CONSTRAINT bookings_status_check
+  CHECK (status IN ('pending_payment','requested','paid','confirmed','cancelled','refunded','failed','expired'));
+`
   }
 ];
 

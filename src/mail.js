@@ -57,9 +57,38 @@ function bookingLines(b) {
     `Subtotal: ${inr(b.subtotal_paise)}`,
     `GST (${b.gst_percent}%): ${inr(b.gst_paise)}`,
     `Total: ${inr(b.total_paise)}`,
-    `Paid online: ${inr(b.pay_now_paise)}`,
-    b.total_paise > b.pay_now_paise ? `Balance due at the Centre: ${inr(b.total_paise - b.pay_now_paise)}` : null
+    ...(b.provider === 'request'
+      ? ['Payment: nothing was paid online. The Centre arranges payment when it confirms.']
+      : [`Paid online: ${inr(b.pay_now_paise)}`,
+        b.total_paise > b.pay_now_paise ? `Balance due at the Centre: ${inr(b.total_paise - b.pay_now_paise)}` : null])
   ].filter(l => l !== null);
+}
+
+// Never throws. Booking request (no online payment): the Centre must confirm; the guest gets a copy.
+async function notifyBookingRequest(b, { centreTo, siteName, adminUrl, guestUrl, replyHours, phones }) {
+  const t = getTransport();
+  if (!t) return;
+  const from = config.smtp.from || config.smtp.user;
+  const jobs = [];
+  if (centreTo) {
+    jobs.push(t.sendMail({
+      from, to: centreTo, subject: `Booking request ${b.ref}: please confirm or cancel`,
+      text: [`A guest has sent a booking request ${b.ref}. Nothing was paid online. The rooms are held for now.`,
+        'Please contact the guest, then confirm or cancel the request in the admin.', '',
+        `Name: ${b.name}`, `Phone: ${b.phone}`, `Email: ${b.email}`, ...bookingLines(b),
+        `Message: ${b.message || '-'}`, '', `Manage it: ${adminUrl}`].join('\n')
+    }));
+  }
+  if (b.email) {
+    jobs.push(t.sendMail({
+      from, to: b.email, subject: `${siteName}: booking request ${b.ref} received`,
+      text: [`Dear ${b.name},`, '', 'Thank you. We have received your booking request below. It is not confirmed yet.',
+        replyHours > 0 ? `The Centre will contact you within ${replyHours} hours to confirm and arrange payment.` : 'The Centre will contact you to confirm and arrange payment.', '',
+        ...bookingLines(b), '', `View your booking: ${guestUrl}`, '',
+        phones && phones.length ? `Questions? Call ${phones.join(' or ')}.` : ''].join('\n')
+    }));
+  }
+  try { await Promise.all(jobs); } catch (err) { console.error('Booking request email failed:', err.message); }
 }
 
 // Never throws. Sends the Centre a notice and the guest a receipt for a paid booking.
@@ -89,4 +118,4 @@ async function notifyBooking(b, { centreTo, siteName, adminUrl, guestUrl, replyH
   try { await Promise.all(jobs); } catch (err) { console.error('Booking email failed:', err.message); }
 }
 
-module.exports = { notifyEnquiry, notifyBooking };
+module.exports = { notifyEnquiry, notifyBooking, notifyBookingRequest };

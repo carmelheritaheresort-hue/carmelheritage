@@ -7,6 +7,7 @@
   var rooms = JSON.parse(form.getAttribute('data-rooms') || '{}');
   var pricing = JSON.parse(form.getAttribute('data-pricing') || '{}');
   var provider = form.getAttribute('data-provider');
+  var isRequest = provider === 'request';
   var today = form.getAttribute('data-today');
   var summaryErr = form.querySelector('.form-errors');
   var statusEl = form.querySelector('[data-avail-status]');
@@ -131,7 +132,57 @@
     card.querySelector('[data-step="-1"]').disabled = v <= 0;
     card.querySelector('[data-step="1"]').disabled = v >= +input.max;
     card.classList.toggle('picked', v > 0);
+    var st = card.querySelector('[data-picked-for]');
+    if (st) st.textContent = v > 0 ? '\u2713 ' + plural(v, 'selected', 'selected') : '';
+    var sel = $('[data-room-select="' + kind + '"]');
+    if (sel) {
+      var full = v >= +input.max;
+      sel.disabled = full;
+      sel.textContent = +input.max <= 0 ? 'Not available for your dates'
+        : v > 0 ? (full ? 'All available selected' : 'Add one more') : 'Select this ' + (kind === 'cottage' ? 'cottage' : 'room');
+    }
+    var av = $('[data-rd-avail="' + kind + '"]');
+    if (av) av.textContent = avail ? (+input.max ? plural(+input.max, 'available', 'available') + ' for your dates.' : 'Fully booked for these dates.') : 'Choose your dates to see how many are free.';
   }
+
+  // ---- Room details window --------------------------------------------------
+  function loadImgs(root) {
+    root.querySelectorAll('img[data-src]').forEach(function (i) { if (!i.getAttribute('src')) i.src = i.getAttribute('data-src'); });
+  }
+  var lastOpener = null;
+  form.querySelectorAll('[data-room-open]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var dlg = $('[data-room-dialog="' + b.getAttribute('data-room-open') + '"]');
+      if (!dlg || typeof dlg.showModal !== 'function') { return; }
+      loadImgs(dlg);
+      lastOpener = b;
+      dlg.showModal();
+    });
+  });
+  form.querySelectorAll('[data-room-dialog]').forEach(function (dlg) {
+    var kind = dlg.getAttribute('data-room-dialog');
+    dlg.querySelectorAll('[data-room-close]').forEach(function (c) { c.addEventListener('click', function () { dlg.close(); }); });
+    // A click on the dark backdrop (outside the panel) closes the window.
+    dlg.addEventListener('click', function (ev) { if (ev.target === dlg) dlg.close(); });
+    dlg.addEventListener('close', function () { if (lastOpener) lastOpener.focus(); });
+    var main = dlg.querySelector('[data-rd-main]');
+    dlg.querySelectorAll('[data-rd-thumb]').forEach(function (t) {
+      t.addEventListener('click', function () {
+        main.src = t.getAttribute('data-src'); main.alt = t.getAttribute('data-alt') || '';
+        dlg.querySelectorAll('[data-rd-thumb]').forEach(function (x) { x.removeAttribute('aria-current'); });
+        t.setAttribute('aria-current', 'true');
+      });
+    });
+    var pick = dlg.querySelector('[data-room-select]');
+    if (pick) pick.addEventListener('click', function () {
+      var input = el[UNIT_FIELD[kind]];
+      var v = Math.min(+input.max, (+input.value || 0) + 1);
+      input.value = v; syncStepper(kind); update();
+      dlg.close();
+      var card = $('[data-room="' + kind + '"]');
+      if (card) card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+  });
   form.querySelectorAll('[data-room]').forEach(function (card) {
     var kind = card.getAttribute('data-room'), input = el[UNIT_FIELD[kind]];
     card.querySelectorAll('[data-step]').forEach(function (b) {
@@ -174,7 +225,7 @@
     var ok = datesValid() && hasRooms && !fit;
     $('[data-summary-empty]').hidden = ok || !!fit;
     $('[data-summary-body]').hidden = !ok;
-    if (!ok) { payBtn.textContent = 'Continue to payment'; return; }
+    if (!ok) { payBtn.textContent = isRequest ? 'Send booking request' : 'Continue to payment'; return; }
     var q = C.quote(sel, rooms, pricing);
     $('[data-sum-dates]').textContent = fmt(sel.check_in) + ' to ' + fmt(sel.check_out) + ' \u00B7 ' + plural(q.nights, 'night', 'nights');
     var tb = $('[data-sum-lines]');
@@ -196,6 +247,7 @@
     $('[data-sum-gst-label]').textContent = 'GST (' + q.gstPercent + '%)';
     $('[data-sum-gst]').textContent = C.rupees(q.gst);
     $('[data-sum-total]').textContent = C.rupees(q.total);
+    if (isRequest) { payBtn.textContent = 'Send booking request'; return; }
     var advance = q.payNow < q.total;
     $('[data-sum-paynow-label]').textContent = advance ? 'Advance to pay now (' + pricing.advancePercent + '%)' : 'Pay now';
     $('[data-sum-paynow]').textContent = C.rupees(q.payNow);
@@ -247,7 +299,7 @@
     var v = C.validate(raw, { today: today, rooms: rooms, availability: avail || undefined });
     if (!v.ok) { showErrors(v.errors); return; }
     clearErrors();
-    setBusy(true, 'Holding your rooms...');
+    setBusy(true, isRequest ? 'Sending your request...' : 'Holding your rooms...');
     if (window.cavTrack) window.cavTrack('Booking Start');
 
     post('/api/bookings', raw).then(function (j) {
@@ -257,6 +309,7 @@
         showErrors(j.errors || {}, j.error || (j.availability ? 'Some rooms were just booked by someone else. Please review your choice.' : 'Please check the following:'));
         return;
       }
+      if (j.provider === 'request') { window.location.href = j.redirect; return; }
       if (j.provider === 'dev') return simulate(j);
       openRazorpay(j);
     }).catch(function () {

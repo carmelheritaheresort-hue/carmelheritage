@@ -72,6 +72,7 @@ r.get('/', async (req, res) => {
     recent: await db.all('SELECT * FROM enquiries ORDER BY id DESC LIMIT 8'),
     unapproved, resources, live: res.locals.s.site_live,
     paidCount: await one("SELECT COUNT(*) AS c FROM bookings WHERE status='paid'"),
+    requestCount: await one("SELECT COUNT(*) AS c FROM bookings WHERE status='requested' AND hold_expires_at > ?", new Date().toISOString()),
     upcoming: await one("SELECT COUNT(*) AS c FROM bookings WHERE status IN ('paid','confirmed') AND check_in >= ? AND check_in <= ?", todayIST(), calc.addDays(todayIST(), 30))
   });
 });
@@ -264,7 +265,12 @@ r.post('/enquiries/:id/delete', auth.allow(), async (req, res) => {
 // ---- Bookings -------------------------------------------------------------
 const BSTATUSES = Object.keys(booking.STATUS_LABEL);
 // Statuses staff may set by hand. Payment states come only from the payment gateway.
-const MANUAL = { paid: ['confirmed', 'cancelled', 'refunded'], confirmed: ['cancelled', 'refunded'], cancelled: ['refunded', 'confirmed'], pending_payment: ['cancelled'] };
+const MANUAL = {
+  requested: ['confirmed', 'cancelled'], paid: ['confirmed', 'cancelled', 'refunded'], confirmed: ['cancelled', 'refunded'],
+  cancelled: ['refunded', 'confirmed'], pending_payment: ['cancelled'], expired: ['confirmed']
+};
+// Statuses whose rooms are not held any more; confirming from these re-checks availability first.
+const RELEASED = ['cancelled', 'expired', 'refunded', 'failed'];
 
 function bookingFilter(q) {
   const w = [], p = [];
@@ -335,6 +341,9 @@ r.post('/bookings/:id', auth.allow(...enq), async (req, res) => {
   const want = String(req.body.status || '');
   if (want && want !== b.status) {
     if (!(MANUAL[b.status] || []).includes(want)) return msg(res, 'Not allowed', 'That status change is not allowed.', 400);
+    if (want === 'confirmed' && RELEASED.includes(b.status) && !(await booking.stillFits(b))) {
+      return msg(res, 'Rooms no longer free', 'The rooms for these dates have been taken by another booking or a room block since this booking was released. Check the dates with the guest, then add a new booking.', 409);
+    }
     status = want;
   }
   const now = new Date().toISOString();
@@ -489,7 +498,7 @@ r.get('/checklist', auth.allow(), async (req, res) => {
     facilities: `${await count('facilities')} unapproved, ${await published('facilities')} published.`,
     testimonials: `${await count('testimonials')} unapproved.`,
     images: `${await count('gallery')} unapproved gallery images.`,
-    payments: { razorpay: payments.isTestKey() ? 'Razorpay TEST keys in use.' : 'Razorpay live keys in use.', dev: 'No Razorpay keys: development simulation only.', '': 'No Razorpay keys: online booking is closed.' }[payments.provider()],
+    payments: { razorpay: payments.isTestKey() ? 'Razorpay TEST keys in use.' : 'Razorpay live keys in use.', dev: 'No Razorpay keys: development simulation only.', '': 'No Razorpay keys: guests send booking requests (no online payment) and you confirm them.' }[payments.provider()],
     privacy: `Retention: ${Number(s.retention_days) ? s.retention_days + ' days' : 'keep until deleted'}.`
   };
   res.render('admin/checklist', { items: CHECKLIST, checked, hints, review: settings.defs.filter(d => d.review), s, saved: req.query.saved === '1' });

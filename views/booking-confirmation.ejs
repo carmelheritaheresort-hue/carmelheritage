@@ -1,8 +1,10 @@
 <%- include('partials/head') %>
 <%- include('partials/header') %>
 <%
-  const paid = ['paid', 'confirmed', 'refunded'].includes(b.status);
+  const isRequest = b.provider === 'request';
+  const paid = !isRequest && ['paid', 'confirmed', 'refunded'].includes(b.status);
   const heading = b.status === 'confirmed' ? 'Your booking is <em>confirmed</em>'
+    : b.status === 'requested' ? 'Booking request <em>received</em>'
     : b.status === 'paid' ? 'Payment <em>received</em>'
     : b.status === 'pending_payment' ? 'Payment <em>pending</em>'
     : b.status === 'refunded' ? 'Booking <em>refunded</em>'
@@ -14,7 +16,14 @@
   <section class="section bg-parchment">
     <div class="narrow">
       <div class="form-card">
-        <% if (b.status === 'paid') { %>
+        <% if (b.status === 'requested') { %>
+          <p class="lead">Thank you, <%= b.name %>. We have received your booking request. It is <strong>not confirmed yet</strong>.</p>
+          <div class="note"><p><strong>What happens next:</strong> the Centre checks your rooms and contacts you<%= replyHours ? ' within ' + replyHours + ' hours' : '' %> by phone, WhatsApp or email to confirm and arrange payment. Nothing has been paid online.</p></div>
+          <p>To reach the Centre sooner, send these booking details on WhatsApp.</p>
+        <% } else if (b.status === 'expired' && isRequest) { %>
+          <p class="lead">This booking request was not confirmed in time and the rooms have been released. Please contact the Centre or make a new booking.</p>
+          <p><a class="btn btn-primary" href="/book">Start a new booking</a></p>
+        <% } else if (b.status === 'paid') { %>
           <p class="lead">Thank you, <%= b.name %>. We have received <strong><%= rupees(b.pay_now_paise) %></strong>.</p>
           <div class="note"><p><strong>What happens next:</strong> the Centre checks your rooms and confirms your booking<%= replyHours ? ' within ' + replyHours + ' hours' : '' %> by phone, WhatsApp or email. If the rooms cannot be provided, the amount you paid is refunded in full.</p></div>
         <% } else if (b.status === 'confirmed') { %>
@@ -49,14 +58,24 @@
             <tr><th scope="row">Subtotal</th><td><%= rupees(b.subtotal_paise) %></td></tr>
             <tr><th scope="row">GST (<%= b.gst_percent %>%)</th><td><%= rupees(b.gst_paise) %></td></tr>
             <tr class="sum-total"><th scope="row">Total</th><td><%= rupees(b.total_paise) %></td></tr>
+            <% if (!isRequest) { %>
             <tr><th scope="row"><%= paid ? 'Paid online' : 'To pay online' %></th><td><%= rupees(b.pay_now_paise) %></td></tr>
             <% if (b.balance_paise > 0) { %><tr><th scope="row">Balance due at the Centre</th><td><%= rupees(b.balance_paise) %></td></tr><% } %>
+            <% } %>
           </tfoot>
         </table>
         <% if (b.provider_payment_id && paid) { %><p class="small">Payment ID: <%= b.provider_payment_id %></p><% } %>
-        <p class="small">Keep this page's address or your reference <strong><%= b.ref %></strong> for your records. <% if (mailOn && paid) { %>A copy has been emailed to <%= b.email %>.<% } %></p>
+        <p class="small">Keep this page's address or your reference <strong><%= b.ref %></strong> for your records. <% if (mailOn && (paid || b.status === 'requested')) { %>A copy has been emailed to <%= b.email %>.<% } %></p>
+        <%
+          const waText = b.status === 'requested'
+            ? ['Hello ' + s.site_name + ', I have sent booking request ' + b.ref + '.',
+               'Name: ' + b.name, 'Check-in: ' + fmtDate(b.check_in), 'Check-out: ' + fmtDate(b.check_out) + ' (' + b.nights + ' night' + (b.nights === 1 ? '' : 's') + ')',
+               'Rooms: ' + b.rooms.filter(function (r) { return /cottage|standard/i.test(r.label); }).map(function (r) { return r.units + ' ' + r.label.toLowerCase(); }).join(', '),
+               'Guests: ' + b.guestText, 'Total: ' + rupees(b.total_paise), 'Please confirm.'].join('\n')
+            : 'Hello ' + s.site_name + ', I have a question about my booking ' + b.ref + '.';
+        %>
         <div class="btn-row">
-          <a class="btn btn-whatsapp" href="<%= waLink('Hello ' + s.site_name + ', I have a question about my booking ' + b.ref + '.') %>" target="_blank" rel="noopener">WhatsApp about this booking</a>
+          <a class="btn btn-whatsapp" href="<%= waLink(waText) %>" target="_blank" rel="noopener"><%= b.status === 'requested' ? 'Send details on WhatsApp' : 'WhatsApp about this booking' %></a>
           <a class="btn btn-outline" href="<%= tel(phones[0] || '') %>">Call <%= phones[0] %></a>
         </div>
         <p class="small mt">See the <a href="/booking-cancellation-policy">Booking and Cancellation Policy</a>.</p>

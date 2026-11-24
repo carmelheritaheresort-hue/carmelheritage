@@ -185,9 +185,18 @@ get('/enquiry', async (req, res) => {
 
 get('/book', async (req, res) => {
   const s = res.locals.s;
-  const rooms = await content.safe(() => booking.roomTypes(), {});
-  const provider = payments.provider();
-  const open = !!s.booking_enabled && !!provider && Object.keys(rooms).length > 0;
+  const [rooms, gallery] = await Promise.all([content.safe(() => booking.roomTypes(), {}), content.safe(() => content.approved('gallery'), [])]);
+  const provider = payments.bookingMode();
+  const open = !!s.booking_enabled && Object.keys(rooms).length > 0;
+  // Photos for the room details window: the room's own photo, then gallery photos captioned "Cottage..." / "Standard...".
+  const roomPhotos = {};
+  for (const [kind, re] of [['cottage', /^cottage/i], ['standard_room', /^standard/i]]) {
+    const r = rooms[kind];
+    if (!r) continue;
+    const list = r.photo ? [{ src: r.photo, alt: r.photo_alt || r.name }] : [];
+    for (const g of gallery) if (re.test(g.caption || '') && g.image && !g.is_illustration && !list.some(x => x.src === g.image)) list.push({ src: g.image, alt: g.alt || g.caption });
+    roomPhotos[kind] = list.slice(0, 8);
+  }
   const q = req.query;
   const pick = (v, re) => (typeof v === 'string' && re.test(v) ? v : '');
   const pre = {
@@ -200,11 +209,12 @@ get('/book', async (req, res) => {
   };
   page(req, res, 'book', {
     title: `Book Your Stay | ${s.site_name}`,
-    description: `Choose dates, rooms and guests at ${s.site_name}, Bhoothathankettu, and pay securely online.`,
+    description: `Choose dates, rooms and guests at ${s.site_name}, Bhoothathankettu, and book your stay online.`,
     noindex: true,
     crumbs: [{ name: 'Book', path: '/book' }]
   }, {
-    open, provider, rooms, pre,
+    open, provider, rooms, pre, roomPhotos,
+    requestHoldHours: booking.requestHoldHours(s),
     pricing: booking.pricing(s),
     today: todayIST(),
     testMode: provider === 'dev' || (provider === 'razorpay' && payments.isTestKey()),

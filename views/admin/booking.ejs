@@ -4,6 +4,7 @@
 <% if (saved) { %><p class="ok" role="status">Saved.</p><% } %>
 <% if (b.status === 'paid') { %><p class="warn" role="note">The guest has paid. Check the rooms, then set the status to <strong>Confirmed</strong> and tell the guest. If you cannot provide the rooms, refund the payment in Razorpay and set the status to <strong>Refunded</strong>.</p><% } %>
 <%- include('_guest-badge', { guest: guest }) %>
+<% if (b.status === 'requested') { %><p class="warn" role="note">Booking request: nothing was paid online. The rooms are held until <strong><%= fmtDateTime(b.hold_expires_at) %></strong>. Call or WhatsApp the guest, agree how they will pay, then set the status to <strong>Confirmed</strong>. If you cannot take the booking, set it to <strong>Cancelled</strong> so the rooms are released.</p><% } %>
 <% if (b.provider === 'dev') { %><p class="warn" role="note">TEST booking made on a development server. No money was taken.</p><% } %>
 <dl class="details">
   <dt>Guest</dt><dd><%= b.name %></dd>
@@ -16,8 +17,12 @@
   <dt>Subtotal</dt><dd><%= rupees(b.subtotal_paise) %></dd>
   <dt>GST (<%= b.gst_percent %>%)</dt><dd><%= rupees(b.gst_paise) %></dd>
   <dt>Total</dt><dd><strong><%= rupees(b.total_paise) %></strong></dd>
+  <% if (b.provider === 'request') { %>
+  <dt>Payment</dt><dd>Booking request: nothing paid online. <%= rupees(b.total_paise) %> to be collected by the Centre.</dd>
+  <% } else { %>
   <dt>Online payment</dt><dd><%= rupees(b.pay_now_paise) %><%= b.paid_at ? ' paid ' + fmtDateTime(b.paid_at) : ' (not paid)' %></dd>
   <% if (b.balance_paise > 0) { %><dt>Balance at the Centre</dt><dd><%= rupees(b.balance_paise) %></dd><% } %>
+  <% } %>
   <dt>Payment</dt><dd><%= b.provider || '-' %><%= b.provider_order_id ? ' · order ' + b.provider_order_id : '' %><%= b.provider_payment_id ? ' · payment ' + b.provider_payment_id : '' %>
     <% if (gatewayUrl) { %> &middot; <a href="<%= gatewayUrl %>" target="_blank" rel="noopener">Open in Razorpay</a><% } %></dd>
   <dt>Booked</dt><dd><%= fmtDateTime(b.created_at) %></dd>

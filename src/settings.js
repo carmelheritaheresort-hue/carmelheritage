@@ -103,8 +103,10 @@ const defs = [
   { key: 'check_out_time', group: 'Stay details', label: 'Check-out time', type: 'text', def: '', review: true, help: 'Hidden on the site while empty.' },
 
   // Online booking
-  { key: 'booking_enabled', group: 'Online booking and payments', label: 'Online booking with payment is open', type: 'bool', def: true, review: true,
-    help: 'When unticked, the Book page sends guests to the WhatsApp enquiry instead. Room prices and guest limits are set under Accommodation.' },
+  { key: 'booking_enabled', group: 'Online booking and payments', label: 'Online booking is open', type: 'bool', def: true, review: true,
+    help: 'When unticked, the Book page sends guests to the WhatsApp enquiry instead. Without Razorpay keys, guests send a booking request (no online payment) and you confirm it under Bookings. Room prices and guest limits are set under Accommodation.' },
+  { key: 'request_hold_hours', group: 'Online booking and payments', label: 'Hours a booking request keeps its rooms', type: 'number', def: '48',
+    help: 'Used only while no payment gateway is connected. If you have not confirmed or cancelled a request by then, its rooms are released (1 to 168).' },
   { key: 'gst_percent', group: 'Online booking and payments', label: 'GST on room tariff (%)', type: 'percent', def: '5', review: true,
     help: 'Added on top of the room price. 5% applies to rooms up to Rs 7,500 a night from 22 September 2025. Confirm with your accountant.' },
   { key: 'payment_mode', group: 'Online booking and payments', label: 'What the guest pays online', type: 'select', def: 'advance', review: true,
@@ -113,8 +115,8 @@ const defs = [
     help: 'Used only when "An advance" is selected. 100 collects the full amount.' },
   { key: 'room_photo_note', group: 'Online booking and payments', label: 'Small note under room photos', type: 'text',
     def: 'Images are for illustration only. The actual room may differ, depending on availability.' },
-  { key: 'booking_reply_hours', group: 'Online booking and payments', label: 'Hours within which the Centre confirms a paid booking', type: 'number', def: '24', review: true,
-    help: 'Shown to guests after payment. 0 hides the promise.' },
+  { key: 'booking_reply_hours', group: 'Online booking and payments', label: 'Hours within which the Centre confirms a booking', type: 'number', def: '24', review: true,
+    help: 'Shown to guests after they pay or send a booking request. 0 hides the promise.' },
 
   // Ayurveda packages page
   { key: 'packages_intro', group: 'Ayurveda packages page', label: 'Page introduction', type: 'textarea',

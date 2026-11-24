@@ -565,3 +565,32 @@ input[readonly]:focus { box-shadow: none; border-color: var(--line); }
 /* Soft vignette for a filmic look; the existing gradient keeps the text readable. */
 .hero-slides::after { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: radial-gradient(ellipse at center, transparent 55%, rgba(5,12,8,.55) 100%); }
 @media (prefers-reduced-motion: reduce) { .hero-slides .hs-slide { transform: none !important; animation: none !important; } }
+
+/* Book page: room photo button and room details window */
+.room-media-btn { position: relative; display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.room-media-btn img { transition: transform .4s ease; }
+.room-media-btn:hover img { transform: scale(1.04); }
+.room-media-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.room-media-tag { position: absolute; left: .5rem; bottom: .5rem; padding: .35rem .6rem; background: rgba(13,27,20,.78); color: #fff; font: 700 .68rem/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; }
+.room-pick-status { margin: .5rem 0 0; min-height: 1.2em; font: 700 .8rem/1.3 var(--sans); color: var(--wa); }
+.room-pick-body .btn-link { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: var(--gold-text); text-decoration: underline; }
+.room-dialog { width: min(920px, calc(100% - 1.5rem)); max-height: calc(100% - 1.5rem); padding: 0; border: 0; background: #fff; color: var(--ink, #1d2a22); box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.room-dialog::backdrop { background: rgba(8,16,11,.72); }
+.rd-inner { display: flex; flex-direction: column; }
+.rd-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .8rem 1.1rem; background: var(--forest-deep); color: #fff; }
+.rd-head h3 { margin: 0; color: #fff; font-size: 1.5rem; }
+.rd-close { width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.5); background: none; color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer; }
+.rd-close:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.rd-main { margin: 0; aspect-ratio: 16 / 9; max-height: 58vh; width: 100%; background: var(--sand); overflow: hidden; }
+.rd-main img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rd-thumbs { display: flex; gap: .4rem; overflow-x: auto; padding: .5rem 1.1rem 0; margin: 0; }
+.rd-thumbs button { flex: none; width: 84px; height: 60px; padding: 0; border: 2px solid transparent; background: var(--sand); cursor: pointer; opacity: .75; }
+.rd-thumbs button[aria-current="true"] { border-color: var(--gold); opacity: 1; }
+.rd-thumbs button:hover { opacity: 1; }
+.rd-thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rd-body { padding: 1rem 1.1rem 1.3rem; }
+.rd-sub { margin: 1rem 0 .3rem; font: 700 .78rem/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--gold-text); }
+.rd-amen { columns: 2; margin: 0 0 .8rem; padding-left: 1.1rem; }
+@media (max-width: 560px) { .rd-amen { columns: 1; } .rd-thumbs button { width: 64px; height: 46px; } }
+.sum-request { display: block; font-size: .92rem; }
+.sum-request span { display: block; margin-bottom: .25rem; font-weight: 700; color: var(--gold-light); }

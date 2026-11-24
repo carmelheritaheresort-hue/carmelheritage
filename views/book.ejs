@@ -5,12 +5,14 @@
   const roomData = {};
   Object.keys(rooms).forEach(function (k) { const r = rooms[k]; roomData[k] = { rate: r.rate, maxGuests: r.maxGuests, baseAdults: r.baseAdults, extraAdult: r.extraAdult, extraChild: r.extraChild, total: r.total, name: r.name }; });
   const gstLabel = pricing.gstPercent ? ' + ' + pricing.gstPercent + '% GST' : '';
+  const isRequest = provider === 'request';
+  const photosFor = function (k) { return (locals.roomPhotos && roomPhotos[k]) || []; };
 %>
 <main id="main">
   <%- include('partials/page-hero', {
     heroEyebrow: 'Reservations',
     heroTitle: 'Book your <em>stay</em>',
-    heroLead: 'Choose your dates, rooms and guests, then pay securely online.',
+    heroLead: isRequest ? 'Choose your dates, rooms and guests, then send your booking. The Centre confirms it with you.' : 'Choose your dates, rooms and guests, then pay securely online.',
     heroImage: s.stay_image, heroAlt: s.stay_image_alt
   }) %>
 
@@ -76,9 +78,13 @@
             <legend><span class="step-no">2</span> Choose your rooms</legend>
             <div class="room-picks">
             <% kinds.forEach(function (k) { const r = rooms[k[0]]; if (!r) return; %>
+              <% const ph = photosFor(k[0]); %>
               <div class="room-pick" data-room="<%= k[0] %>"<%- pre.room === k[2] ? ' data-preselect' : '' %>>
                 <div class="room-pick-media">
-                  <% if (r.photo) { %><%- img(r.photo, r.photo_alt) %><% } else { %><div class="ph" aria-hidden="true"><img src="/img/logo-emblem-gold.png" alt="" width="120" height="119"></div><% } %>
+                  <button type="button" class="room-media-btn" data-room-open="<%= k[0] %>" aria-haspopup="dialog">
+                    <% if (r.photo) { %><%- img(r.photo, '') %><% } else { %><span class="ph" aria-hidden="true"><img src="/img/logo-emblem-gold.png" alt="" width="120" height="119"></span><% } %>
+                    <span class="room-media-tag"><%= ph.length > 1 ? 'View ' + ph.length + ' photos' : 'View room' %><span class="sr-only">: <%= r.name %> details</span></span>
+                  </button>
                 </div>
                 <div class="room-pick-body">
                   <h3 id="rp-<%= k[0] %>"><%= r.name %></h3>
@@ -92,11 +98,51 @@
                     <button type="button" class="step-btn" data-step="1" aria-label="One more <%= r.name.toLowerCase() %>">+</button>
                   </div>
                   <p class="err" id="b-<%= k[1] %>-err" data-err-for="<%= k[1] %>" hidden></p>
-                  <a class="btn-link small-link" href="/stay/<%= r.slug %>" target="_blank" rel="noopener">Room details<span class="sr-only"> for <%= r.name %> (opens in a new tab)</span></a>
+                  <p class="room-pick-status" data-picked-for="<%= k[0] %>" aria-live="polite"></p>
+                  <button type="button" class="btn-link small-link" data-room-open="<%= k[0] %>" aria-haspopup="dialog">Room photos and details<span class="sr-only"> for <%= r.name %></span></button>
                 </div>
               </div>
             <% }) %>
             </div>
+
+            <% kinds.forEach(function (k) { const r = rooms[k[0]]; if (!r) return; const ph = photosFor(k[0]); %>
+            <dialog class="room-dialog" data-room-dialog="<%= k[0] %>" aria-labelledby="rd-<%= k[0] %>">
+              <div class="rd-inner">
+                <div class="rd-head">
+                  <h3 id="rd-<%= k[0] %>"><%= r.name %></h3>
+                  <button type="button" class="rd-close" data-room-close aria-label="Close">&times;</button>
+                </div>
+                <% if (ph.length) { %>
+                <div class="rd-gallery" data-rd-gallery>
+                  <figure class="rd-main"><img data-rd-main data-src="<%= ph[0].src %>" alt="<%= ph[0].alt %>" decoding="async"></figure>
+                  <% if (ph.length > 1) { %>
+                  <ul class="rd-thumbs plain" aria-label="More photos">
+                    <% ph.forEach(function (p, i) { %>
+                    <li><button type="button" data-rd-thumb data-src="<%= p.src %>" data-alt="<%= p.alt %>" aria-label="Photo <%= i + 1 %> of <%= ph.length %>"<%- i === 0 ? ' aria-current="true"' : '' %>><img data-src="<%= p.src %>" alt="" decoding="async"></button></li>
+                    <% }) %>
+                  </ul>
+                  <% } %>
+                </div>
+                <% } %>
+                <div class="rd-body">
+                  <p class="room-price"><strong><%= rupees(r.rate * 100) %></strong> <span>per <%= k[0] === 'cottage' ? 'cottage' : 'room' %> per night<%= gstLabel %></span></p>
+                  <% if (r.summary) { %><p><%= r.summary %></p><% } %>
+                  <%- include('partials/room-rules', { r: r }) %>
+                  <% const amen = (r.amenities || []).filter(function (a) { return !/air-condition/i.test(a); }); /* AC is already in the room rules */ %>
+                  <% if (amen.length) { %>
+                  <h4 class="rd-sub">In the room</h4>
+                  <ul class="rd-amen"><% amen.forEach(function (a) { %><li><%= a %></li><% }) %></ul>
+                  <% } %>
+                  <% if (s.room_photo_note) { %><p class="photo-note"><%= s.room_photo_note %></p><% } %>
+                  <div class="btn-row">
+                    <button type="button" class="btn btn-primary" data-room-select="<%= k[0] %>">Select this <%= k[0] === 'cottage' ? 'cottage' : 'room' %></button>
+                    <button type="button" class="btn btn-outline" data-room-close>Close</button>
+                  </div>
+                  <p class="small" data-rd-avail="<%= k[0] %>"></p>
+                </div>
+              </div>
+            </dialog>
+            <% }) %>
             <% if (s.room_photo_note) { %><p class="photo-note"><%= s.room_photo_note %></p><% } %>
           </fieldset>
 
@@ -148,20 +194,29 @@
                     <tr class="sum-total"><th scope="row">Total</th><td data-sum-total></td></tr>
                   </tfoot>
                 </table>
+                <% if (isRequest) { %>
+                <p class="sum-paynow sum-request"><span>Nothing to pay online now.</span> The Centre confirms your booking and tells you how to pay.</p>
+                <% } else { %>
                 <div class="sum-paynow">
                   <span data-sum-paynow-label>Pay now</span>
                   <strong data-sum-paynow></strong>
                 </div>
                 <p class="small" data-sum-balance hidden></p>
+                <% } %>
               </div>
             </div>
-            <button class="btn btn-primary btn-lg btn-block" type="submit" data-pay>Continue to payment</button>
+            <button class="btn btn-primary btn-lg btn-block" type="submit" data-pay><%= isRequest ? 'Send booking request' : 'Continue to payment' %></button>
             <% if (provider === 'razorpay') { %><p class="small center pay-secure">Secure payment by Razorpay: UPI, cards and netbanking.</p><% } %>
             <ul class="plain sum-notes small">
               <li>Extra guest charges assume your group shares the rooms, with at least one adult in each.</li>
+              <% if (isRequest) { %>
+              <li>Your rooms are held for <%= requestHoldHours %> hours while the Centre checks and contacts you.</li>
+              <li>Your booking is confirmed only when the Centre confirms it<%= replyHours ? ', usually within ' + replyHours + ' hours' : '' %>.</li>
+              <% } else { %>
               <li>Rooms are held for <%= holdMinutes %> minutes while you pay.</li>
               <li>After payment the Centre checks your rooms and confirms<%= replyHours ? ' within ' + replyHours + ' hours' : '' %>.</li>
               <li>If the rooms cannot be provided, your payment is refunded in full.</li>
+              <% } %>
             </ul>
             <p class="small center">Prefer to talk? <a href="<%= waLink('Hello ' + s.site_name + ', I\u2019d like to book a stay.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">WhatsApp</a> or call <a href="<%= tel(phones[0] || '') %>"><%= phones[0] %></a>.</p>
           </div>

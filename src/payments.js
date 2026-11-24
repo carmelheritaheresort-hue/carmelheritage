@@ -11,6 +11,10 @@ function provider() {
   return '';
 }
 
+// How the Book page takes a booking: online payment ('razorpay' or the local 'dev' simulation),
+// or, with no gateway connected, a booking request that the Centre confirms ('request').
+function bookingMode() { return provider() || 'request'; }
+
 function isTestKey() { return rz.keyId.startsWith('rzp_test_'); }
 
 async function createOrder({ amountPaise, receipt, notes }) {
@@ -54,4 +58,4 @@ function verifyWebhook(rawBody, signature) {
   return safeEqualHex(expected, signature);
 }
 
-module.exports = { provider, isTestKey, createOrder, verifyPaymentSignature, verifyWebhook, keyId: () => rz.keyId };
+module.exports = { provider, bookingMode, isTestKey, createOrder, verifyPaymentSignature, verifyWebhook, keyId: () => rz.keyId };

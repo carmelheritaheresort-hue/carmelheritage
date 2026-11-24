@@ -37,7 +37,7 @@ input[type=checkbox] { width: auto; }
 .checklist li { padding: .5rem 0; border-bottom: 1px solid #e3ddcf; display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
 .plain { list-style: none; padding: 0; }
 .pager a { margin-left: 1rem; }
-.b-paid { background: #ffe1a8; } .b-confirmed { background: #c5ecd2; } .b-pending_payment { background: #e6e6e6; }
+.b-paid, .b-requested { background: #ffe1a8; } .b-confirmed { background: #c5ecd2; } .b-pending_payment { background: #e6e6e6; }
 .b-cancelled, .b-failed { background: #f1cccc; } .b-refunded { background: #cfe3ff; } .b-expired { background: #eee; color: #666; }
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; margin: 1rem 0; }
 .stat-grid > div { background: #fff; border-radius: 8px; padding: .8rem 1rem; }

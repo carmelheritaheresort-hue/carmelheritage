@@ -70,13 +70,22 @@ const availLimiter = rateLimit({ windowMs: 60 * 1000, limit: 60, standardHeaders
 const fetchOnly = (req, res, next) => (req.is('application/json') && req.get('x-requested-with') === 'fetch')
   ? next() : res.status(400).json({ ok: false, error: 'Bad request.' });
 
-function bookingOpen(s) { return !!s.booking_enabled && !!payments.provider(); }
+function bookingOpen(s) { return !!s.booking_enabled; }
 
 function guestUrl(b) { return `${config.siteUrl}/book/confirmation/${b.ref}?t=${b.token}`; }
 
 async function afterPaid(b) {
   const s = await getSettings();
   await mail.notifyBooking(b, {
+    centreTo: s.notify_email || config.notifyEmail, siteName: s.site_name,
+    adminUrl: `${config.siteUrl}/admin/bookings/${b.id}`, guestUrl: guestUrl(b),
+    replyHours: Number(s.booking_reply_hours) || 0, phones: [s.phone_1, s.phone_2].filter(Boolean)
+  });
+}
+
+async function afterRequest(b) {
+  const s = await getSettings();
+  await mail.notifyBookingRequest(b, {
     centreTo: s.notify_email || config.notifyEmail, siteName: s.site_name,
     adminUrl: `${config.siteUrl}/admin/bookings/${b.id}`, guestUrl: guestUrl(b),
     replyHours: Number(s.booking_reply_hours) || 0, phones: [s.phone_1, s.phone_2].filter(Boolean)
@@ -105,10 +114,16 @@ router.post('/bookings', bookingLimiter, express.json({ limit: '10kb' }), fetchO
   if (b0.website) return res.status(400).json({ ok: false, error: 'Bad request.' });
 
   await booking.expireHolds();
-  const result = await booking.createPending(b0, s, payments.provider());
+  const mode = payments.bookingMode();
+  const result = await booking.createPending(b0, s, mode);
   if (!result.ok) return res.status(400).json({ ok: false, errors: result.errors, availability: result.availability });
   const b = result.booking;
-  await guests.attach('bookings', b, 'online booking');
+  await guests.attach('bookings', b, mode === 'request' ? 'booking request' : 'online booking');
+
+  if (mode === 'request') {
+    await afterRequest(b);
+    return res.json({ ok: true, provider: 'request', ref: b.ref, redirect: `/book/confirmation/${b.ref}?t=${b.token}` });
+  }
 
   if (payments.provider() === 'dev') {
     return res.json({ ok: true, provider: 'dev', ref: b.ref, token: b.token, amount: b.pay_now_paise });
