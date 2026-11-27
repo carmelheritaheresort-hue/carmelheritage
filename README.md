@@ -82,6 +82,16 @@ It refuses to overwrite data already in Supabase unless you add `--replace`. The
 4. For a custom domain, add it under **Settings > Domains** and update `SITE_URL`.
 5. Point the Razorpay webhook at `https://YOUR-DOMAIN/api/payments/razorpay/webhook`.
 
+### Live domain (November 2026)
+- The site runs at **https://www.carmelheritage.com** (`SITE_URL`). `carmelheritage.com` redirects there (308). `carmelheritage.vercel.app` still works.
+- The domain is registered at GoDaddy, which also holds the DNS: an `A` record for `@` to `216.198.79.1`, and a `CNAME` record for `www` to `360efb1ebc7bff6e.vercel-dns-017.com`. These are the values Vercel recommended for this project.
+- HTTPS certificates (Let's Encrypt) are issued and renewed by Vercel automatically.
+- Razorpay webhook, when set up: `https://www.carmelheritage.com/api/payments/razorpay/webhook`.
+
+### Standalone Digital Brochure site (not part of this repo)
+- `brochure-site/` is a separate static copy of the brochure page for other hosting; `brochure-site-src/` holds its source. Both are git-ignored.
+- To change it, edit `brochure-site-src/data.js` or replace an image in `brochure-site-src/images/`, then run `node brochure-site-src/build.js`.
+
 Notes for Vercel:
 - Files in `public/` are served by Vercel's CDN. Uploaded photos are in Supabase Storage, because Vercel has no permanent disk.
 - Uploads are limited to 4 MB per image (Vercel's request limit is 4.5 MB).

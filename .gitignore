@@ -7,6 +7,10 @@ node_modules/
 *.log
 # Supplied brochure files (web copies are made into public/img/brochures by scripts/brochure-images.js)
 /brochures/
+# Standalone brochure website (hosted separately) and its source
+/brochure-site/
+/brochure-site-src/
+/brochure-site.zip
 .vercel/
 .DS_Store
 Thumbs.db
