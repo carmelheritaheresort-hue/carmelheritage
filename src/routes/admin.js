@@ -38,7 +38,7 @@ router.get('/login', (req, res) => res.render('admin/login', { error: '', email:
 
 r.post('/login', loginLimiter, express.urlencoded({ extended: false, limit: '10kb' }), async (req, res) => {
   const user = await auth.verifyLogin(req.body.email, req.body.password);
-  if (!user) return res.status(401).render('admin/login', { error: 'Incorrect email or password.', email: String(req.body.email || '').slice(0, 254) });
+  if (!user) return res.status(401).render('admin/login', { error: 'Incorrect username or password.', email: String(req.body.email || '').slice(0, 254) });
   await auth.purgeSessions();
   await auth.createSession(res, user.id);
   await db.run('UPDATE users SET last_login_at=? WHERE id=?', new Date().toISOString(), user.id);
