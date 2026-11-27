@@ -40,6 +40,17 @@ The brochure PDF itself was not received; all packages, prices and schedules wer
 - **Address spelling:** the brochure says "Boothathankettu"; the site uses "Bhoothathankettu" as supplied originally. Confirm the correct spelling (Admin > Settings).
 - **Map:** the brief asks for a Google Map of the verified location. The map stays hidden until the pin is confirmed and entered in Admin > Settings > Location.
 
+## Digital Brochure page (/digital-brochure, from the 5 brochure images supplied in November 2026)
+The original images are shown unchanged. The page text copies their prices, times and inclusions. To change a brochure, replace the file in `brochures/` and run `node scripts/brochure-images.js`, then update `src/data/digital-brochure.js`.
+- **Brand names on the brochures** differ from the website: "Carmel Ayurveda Village" (day out), "Carmel Heritage Resort, Thattekkad, Bhoothathankettu" (group stay) and "Carmel Ayurveda Heritage" (membership). The page text uses Carmel Heritage.
+- **Spelling:** the brochures use "Thattekkad"; the page text uses "Thattekad" (the bird sanctuary's usual spelling). The group stay brochure says "Bhoothaankettu", "Heritage Suit Villa" and "Dence Forest"; the page text says Bhoothathankettu, Heritage Suite Villa and dense forest.
+- **Two membership offers:** 1 year at ₹75,000 (introductory offer; ₹60,000 for the first 25 registrations) and 2 years at ₹1,25,000 (₹1,00,000 for the first 100 subscribers). The page shows them as separate brochures and asks visitors to check which offer is open. Remove a brochure when its offer closes or the registration limit is reached.
+- The 1 year brochure says "12 visits per year"; the 2 year brochure says "12 visits per person annually". Both also say 24 visits per couple. Confirm they mean the same thing.
+- "Doctor consultation and wellness guidance, subject to the programme terms": the programme terms are not published. The membership brochures also say the Centre is "managed and operated by CMI Fathers, under the supervision of experienced Ayurvedic doctors and qualified therapists". This appears only in the images, not in the page text.
+- **Group stay timings overlap:** trekking 10.30 am to 12.30 pm, and boating 12.00 noon to 3.00 pm.
+- Whether the per-head prices include GST, and what happens for groups under 40 or over 50.
+- The Standard Day Out brochure does not give a time for the evening tea.
+
 ## Online booking and payments
 - Prices supplied by the owner: cottage Rs 4,500 and standard room Rs 1,500 per unit per night, plus GST. Confirm whether this is per room regardless of guests, and whether rates change by season or for extra guests.
 - GST is set to 5% (the rate for rooms up to Rs 7,500 a night from 22 September 2025). Confirm with the Centre's accountant, and check the Centre is GST-registered.

@@ -9,6 +9,7 @@ const NAV = [
   { name: 'About', path: '/about', children: [{ name: 'About the Centre', path: '/about' }, { name: 'Facilities', path: '/facilities' }, { name: 'Management', path: '/management' }] },
   { name: 'Treatments', path: '/treatments' },
   { name: 'Ayurveda Packages', path: '/ayurveda-packages' },
+  { name: 'Brochure', path: '/digital-brochure' },
   { name: 'Stay', path: '/stay', children: [{ name: 'Cottages', path: '/stay/cottages' }, { name: 'Standard Rooms', path: '/stay/standard-rooms' }, { name: 'Book Online', path: '/book' }] },
   { name: 'Gallery', path: '/gallery' },
   { name: 'Contact', path: '/contact' }

@@ -1,0 +1,27 @@
+{
+  "standard-day-out-package": {
+    "width": 720,
+    "height": 1080,
+    "bytes": 352579
+  },
+  "premium-day-out-package": {
+    "width": 720,
+    "height": 961,
+    "bytes": 289616
+  },
+  "family-wellness-membership-1-year": {
+    "width": 1075,
+    "height": 1600,
+    "bytes": 339072
+  },
+  "family-wellness-membership-2-years": {
+    "width": 1060,
+    "height": 1599,
+    "bytes": 321235
+  },
+  "group-stay-package": {
+    "width": 1066,
+    "height": 1599,
+    "bytes": 405875
+  }
+}

@@ -6,6 +6,7 @@ const { renderText, todayIST, wrap } = require('../util');
 const booking = require('../booking');
 const payments = require('../payments');
 const calendar = require('../calendar');
+const brochure = require('../data/digital-brochure');
 
 const router = express.Router();
 
@@ -97,6 +98,44 @@ function stayDetail(slug, label) {
 }
 get('/stay/cottages', stayDetail('cottages', 'Cottages'));
 get('/stay/standard-rooms', stayDetail('standard-rooms', 'Standard Rooms'));
+
+get('/digital-brochure', async (req, res) => {
+  const s = res.locals.s;
+  const { items, categories } = brochure;
+  const inr = n => '\u20B9' + Number(n).toLocaleString('en-IN');
+  const by = slug => items.find(b => b.slug === slug);
+  const std = by('standard-day-out-package'), prem = by('premium-day-out-package'), grp = by('group-stay-package');
+  // Questions answered only from the brochures and the Centre's published details.
+  const faqs = [
+    { question: 'How many people do the day out and group stay packages need?',
+      answer: `The Standard Day Out, Premium Day Out and Group Stay packages are for groups of 40 to 50 people. Prices are per head: ${inr(std.prices[0].amount)} (Standard Day Out), ${inr(prem.prices[0].amount)} (Premium Day Out) and ${inr(grp.prices[0].amount)} (Group Stay).` },
+    { question: 'What is the difference between the Standard and Premium Day Out packages?',
+      answer: 'Both include 2 hours of forest trekking, an hour at the Open Jungle Park, lunch, Thattekad Bird Sanctuary sightseeing, a Kuttampuzha riverside forest visit and evening tea with snacks. The Premium package adds a 9.00 am breakfast and provides 3 cottage rooms for fresh-up instead of 2.' },
+    { question: 'Who can join the Family Wellness Membership Programme?',
+      answer: 'The membership is for two adults, both aged 50 or above. It includes one wellness visit every month (24 visits per couple in a year), Ayurvedic massage and room accommodation benefits for both members, and doctor consultation and wellness guidance, subject to the programme terms.' },
+    { question: 'Where does the Group Stay Package stay overnight?',
+      answer: 'Guests stay in the Heritage Suite Villa on a 5 sharing basis, with dinner, a campfire and DJ music in the evening, and breakfast before the 9.00 am check-out.' },
+    { question: 'How do I book a package?',
+      answer: `Press "Enquire Now" under a brochure to send the Centre a WhatsApp message${res.locals.phones.length ? ', or call ' + res.locals.phones.join(' or ') : ''}. The Centre replies with availability and confirms the booking.` }
+  ];
+  const catalog = {
+    '@context': 'https://schema.org', '@type': 'OfferCatalog', name: `${s.site_name} Digital Brochure`,
+    url: config.siteUrl + '/digital-brochure', provider: { '@id': config.siteUrl + '/#business' },
+    itemListElement: items.map(b => ({
+      '@type': 'Offer', name: b.title, price: String(b.prices[0].amount), priceCurrency: 'INR', url: `${config.siteUrl}/digital-brochure#${b.slug}`,
+      description: [b.tagline, ...b.facts, ...b.prices.slice(1).map(p => `${p.label}: ${inr(p.amount)}`)].join('. '),
+      image: seo.abs(b.image + '.jpg'),
+      itemOffered: { '@type': 'Service', name: b.title, description: b.highlights.join('; ') }
+    }))
+  };
+  page(req, res, 'digital-brochure', {
+    title: `Digital Brochure: Day Out, Group Stay and Wellness Membership | ${s.site_name}`,
+    description: `${s.site_name} digital brochure, Bhoothathankettu near Thattekad: Standard Day Out ${inr(std.prices[0].amount)} and Premium Day Out ${inr(prem.prices[0].amount)} per head, Group Stay ${inr(grp.prices[0].amount)} per head, and the Family Wellness Membership for adults 50+.`,
+    crumbs: [{ name: 'Digital Brochure', path: '/digital-brochure' }],
+    image: prem.image + '.jpg',
+    jsonld: [catalog, seo.faqLd(faqs)]
+  }, { items, categories, faqs, inr });
+});
 
 get('/treatments', async (req, res) => {
   const s = res.locals.s;
@@ -259,7 +298,7 @@ function policy(path, key, title, descFn, crumb) {
 policy('/privacy-policy', 'privacy_body', 'Privacy Policy', n => `How ${n} collects, uses and keeps the details you send in an enquiry.`, 'Privacy Policy');
 policy('/booking-cancellation-policy', 'policy_body', 'Booking and Cancellation Policy', n => `How online bookings, confirmations and cancellations work at ${n}.`, 'Booking and Cancellation Policy');
 
-const SITEMAP = ['/', '/about', '/stay', '/stay/cottages', '/stay/standard-rooms', '/treatments', '/ayurveda-packages', '/facilities', '/management', '/gallery', '/contact', '/privacy-policy', '/booking-cancellation-policy'];
+const SITEMAP = ['/', '/about', '/stay', '/stay/cottages', '/stay/standard-rooms', '/treatments', '/ayurveda-packages', '/digital-brochure', '/facilities', '/management', '/gallery', '/contact', '/privacy-policy', '/booking-cancellation-policy'];
 
 router.get('/sitemap.xml', (req, res) => {
   if (!res.locals.s.site_live) return res.status(404).type('text/plain').send('Not found');

@@ -5,6 +5,8 @@ node_modules/
 # Local database, uploads and backups (top-level folder only; src/data holds source code)
 /data/
 *.log
+# Supplied brochure files (web copies are made into public/img/brochures by scripts/brochure-images.js)
+/brochures/
 .vercel/
 .DS_Store
 Thumbs.db

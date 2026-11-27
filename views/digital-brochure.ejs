@@ -1,0 +1,135 @@
+<%- include('partials/head') %>
+<%- include('partials/header') %>
+<%
+  const viewer = items.map(function (b) {
+    return { slug: b.slug, title: b.title, src: b.image + '.jpg', alt: b.alt, w: b.width, h: b.height,
+      file: 'carmel-heritage-' + b.slug + '.jpg' };
+  });
+  const kb = function (n) { return Math.round(n / 1024) + ' KB'; };
+%>
+<main id="main" data-brochures="<%= JSON.stringify(viewer) %>" data-site="<%= s.site_name %>">
+  <%- include('partials/page-hero', {
+    heroEyebrow: 'Digital Brochure',
+    heroTitle: 'Explore Our <em>Experiences</em>',
+    heroLead: 'Discover nature, adventure, relaxation, wellness and unforgettable moments at ' + s.site_name + '.',
+    heroImage: s.hero_image || s.stay_image,
+    heroAlt: s.hero_image ? s.hero_image_alt : s.stay_image_alt,
+    heroExtra: '<p class="tabs" role="navigation" aria-label="On this page">' + categories.map(function (c) { return '<a class="tab" href="#' + c.id + '">' + c.plain + '</a>'; }).join('') + '</p>'
+  }) %>
+
+  <section class="section-tight bro-intro" aria-label="About these brochures">
+    <div class="container narrow center">
+      <p>Tap any brochure to see it full screen and zoom in. You can download it, share it with your group, or press <strong>Enquire Now</strong> to message the Centre on WhatsApp.</p>
+    </div>
+  </section>
+
+  <% categories.forEach(function (c, ci) { const list = items.filter(function (b) { return b.category === c.id; }); if (!list.length) return; %>
+  <section class="section<%= ci % 2 ? ' bg-parchment' : '' %> bro-section" id="<%= c.id %>" aria-labelledby="<%= c.id %>-h">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow"><%= c.eyebrow %></p>
+        <h2 id="<%= c.id %>-h"><%- c.title %></h2>
+        <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+        <p class="lead"><%= c.lead %></p>
+      </div>
+      <div class="bro-grid<%= list.length === 1 ? ' is-single' : '' %>">
+        <% list.forEach(function (b) { const i = items.indexOf(b); const eager = i < 2;
+             const sizes = list.length === 1 ? '(max-width: 600px) 92vw, (max-width: 899px) 540px, 470px' : '(max-width: 700px) 92vw, (max-width: 1100px) 46vw, 540px'; %>
+        <article class="bro-card reveal" id="<%= b.slug %>" aria-labelledby="<%= b.slug %>-h">
+          <a class="bro-media" href="<%= b.image %>.jpg" data-bro-open="<%= i %>">
+            <picture>
+              <source type="image/webp" srcset="<%= b.image %>-480.webp 480w, <%= b.image %>-800.webp <%= Math.min(800, b.width) %>w" sizes="<%= sizes %>">
+              <img src="<%= b.image %>.jpg" alt="<%= b.alt %>" width="<%= b.width %>" height="<%= b.height %>" loading="<%= eager ? 'eager' : 'lazy' %>" decoding="async"<%- i === 0 ? ' fetchpriority="high"' : '' %>>
+            </picture>
+            <span class="bro-view-tag" aria-hidden="true">View full brochure</span>
+            <span class="sr-only">View the full <%= b.title %> brochure</span>
+          </a>
+          <div class="bro-body">
+            <p class="bro-tagline"><%= b.tagline %></p>
+            <h3 id="<%= b.slug %>-h"><%= b.title %></h3>
+            <div class="bro-prices">
+              <% b.prices.forEach(function (p) { %>
+              <p class="bro-price<%= p.offer ? ' is-offer' : '' %>"><span><%= p.label %></span> <strong><%= inr(p.amount) %></strong></p>
+              <% }) %>
+            </div>
+            <ul class="bro-facts plain"><% b.facts.forEach(function (f) { %><li><%= f %></li><% }) %></ul>
+            <h4 class="bro-sub"><%= b.category === 'membership' ? 'Membership benefits' : 'Included' %></h4>
+            <ul class="bro-list"><% b.highlights.forEach(function (h) { %><li><%= h %></li><% }) %></ul>
+            <% if (b.details.length) { %>
+            <details class="bro-details">
+              <summary><%= b.details.map(function (d) { return d.heading; }).join(' and ') %></summary>
+              <% b.details.forEach(function (d) { %>
+              <h4 class="bro-sub"><%= d.heading %></h4>
+              <ul class="bro-list"><% d.items.forEach(function (t) { %><li><%= t %></li><% }) %></ul>
+              <% }) %>
+            </details>
+            <% } %>
+            <div class="bro-actions">
+              <a class="btn btn-whatsapp btn-lg bro-enquire" href="<%= waLink('Hello ' + s.site_name + ', I am interested in your ' + b.enquiry + '. Please share more details, availability and booking information.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">Enquire Now<span class="sr-only"> about the <%= b.title %> on WhatsApp (opens in a new tab)</span></a>
+              <div class="bro-tools">
+                <a class="bro-tool" href="<%= b.image %>.jpg" data-bro-open="<%= i %>"><span class="bro-ico ico-view" aria-hidden="true"></span>View</a>
+                <a class="bro-tool" href="<%= b.image %>.jpg" download="carmel-heritage-<%= b.slug %>.jpg"><span class="bro-ico ico-down" aria-hidden="true"></span>Download<span class="sr-only"> the <%= b.title %> brochure (JPG, <%= kb(b.bytes) %>)</span></a>
+                <button class="bro-tool" type="button" data-bro-share="<%= i %>" hidden><span class="bro-ico ico-share" aria-hidden="true"></span>Share<span class="sr-only"> the <%= b.title %></span></button>
+              </div>
+            </div>
+          </div>
+        </article>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+  <% }) %>
+
+  <section class="section-tight" aria-labelledby="bro-note-h">
+    <div class="container narrow center">
+      <h2 id="bro-note-h" class="h3">Before you book</h2>
+      <p>Prices, times and inclusions are as printed in each brochure. Please confirm the current price, what is included and your dates with the Centre when you enquire. Your booking is confirmed only when the Centre confirms it.</p>
+      <p class="small">Planning a longer stay? See our <a href="/stay">cottages and rooms</a>, the <a href="/ayurveda-packages">Ayurveda treatment packages</a> and the <a href="/gallery">photo gallery</a>, or <a href="/book">book a room online</a>.</p>
+    </div>
+  </section>
+
+  <section class="section bg-parchment" id="faq" aria-labelledby="faq-h">
+    <div class="container narrow">
+      <div class="section-head">
+        <p class="eyebrow">Questions</p>
+        <h2 id="faq-h">Frequently asked <em>questions</em></h2>
+        <img class="ornament" src="/img/ornament.svg" alt="" width="200" height="20">
+      </div>
+      <div class="faq">
+        <% faqs.forEach(function (f, i) { %>
+        <details<%= i === 0 ? ' open' : '' %>><summary><h3><%= f.question %></h3></summary><div class="faq-a"><p><%= f.answer %></p></div></details>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+
+  <%- include('partials/contact-actions', {
+    actionsTitle: 'Plan your <em>visit</em>',
+    actionsText: 'Message or call the Centre to check dates for your group, family or membership.',
+    waText: 'Hello ' + s.site_name + ', I saw your digital brochure and would like to know more.'
+  }) %>
+
+  <dialog class="bro-lightbox" data-bro-lightbox aria-labelledby="lb-title">
+    <div class="lb-bar">
+      <p class="lb-title" id="lb-title" data-lb-title></p>
+      <div class="lb-tools" role="toolbar" aria-label="Brochure tools">
+        <button type="button" class="lb-btn" data-lb-zoom="-1" aria-label="Zoom out">&minus;</button>
+        <output class="lb-level" data-lb-level aria-live="polite">Fit</output>
+        <button type="button" class="lb-btn" data-lb-zoom="1" aria-label="Zoom in">+</button>
+        <button type="button" class="lb-btn lb-text" data-lb-fit>Fit</button>
+        <a class="lb-btn lb-text" data-lb-download href="#" download>Download</a>
+        <button type="button" class="lb-btn lb-text" data-lb-share hidden>Share</button>
+        <button type="button" class="lb-btn lb-close" data-lb-close aria-label="Close">&times;</button>
+      </div>
+    </div>
+    <div class="lb-stage" data-lb-stage>
+      <img data-lb-img alt="" decoding="async">
+    </div>
+    <button type="button" class="lb-nav lb-prev" data-lb-step="-1" aria-label="Previous brochure">&lsaquo;</button>
+    <button type="button" class="lb-nav lb-next" data-lb-step="1" aria-label="Next brochure">&rsaquo;</button>
+    <p class="lb-foot"><span data-lb-count></span><span class="lb-hint"> &middot; Double-tap or use + to zoom. Drag to move around.</span></p>
+  </dialog>
+  <p class="bro-toast" data-bro-toast role="status" aria-live="polite" hidden></p>
+</main>
+<script src="/js/brochure.js" defer></script>
+<%- include('partials/footer') %>
