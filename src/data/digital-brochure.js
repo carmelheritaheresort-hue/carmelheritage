@@ -54,6 +54,34 @@ const items = [
     enquiry: 'Premium Day Out Package'
   },
   {
+    slug: 'school-day-out-programme', category: 'schools',
+    title: 'School Day-Out Programme', tagline: 'A nature-inspired learning and adventure day',
+    prices: [{ label: 'Children below 15 years, per student', amount: 850 }, { label: 'Students above 15 years, per student', amount: 1100 }],
+    facts: ['For school groups', 'Set amid 9.5 acres overlooking Bhoothathankettu Dam'],
+    highlights: [
+      'Welcome and South Indian breakfast',
+      'Guided nature and forest walk',
+      'Jungle park visit and magic show',
+      'Traditional Kerala-style lunch',
+      'Local sightseeing',
+      'Tea and snacks'
+    ],
+    details: [
+      { heading: 'The programme', items: [
+        '9.00 am: arrival at Carmel Heritage Resort, welcome and South Indian breakfast',
+        '9.30 am to 10.30 am: guided nature and forest walk',
+        '10.30 am to 12.45 pm: jungle park visit and magic show',
+        '12.45 pm to 1.30 pm: traditional Kerala-style lunch',
+        '1.30 pm onwards: local sightseeing',
+        '4.30 pm: tea and snacks'
+      ] },
+      { heading: 'Nearby places to explore', items: ['Bhoothathankettu Dam', 'Thattekad Bird Sanctuary', 'Inchathotty Hanging Bridge', 'Vadattupara Waterfalls', 'Kuttampuzha', 'Pooyamkutty'] }
+    ],
+    note: 'Please confirm package inclusions, transport, teacher charges, final timings and availability with the Centre before booking.',
+    alt: 'School Day-Out Programme brochure from Carmel Heritage Resort, Bhoothathankettu: a nature-inspired learning and adventure day for schools, 850 rupees per student below 15 years and 1,100 rupees per student above 15 years, with breakfast, a guided forest walk, jungle park visit and magic show, Kerala-style lunch, local sightseeing and tea.',
+    enquiry: 'School Day-Out Programme'
+  },
+  {
     slug: 'family-wellness-membership-1-year', category: 'membership',
     title: 'Family Wellness Membership: 1 Year', tagline: 'Introductory offer · For adults aged 50 and above',
     prices: [{ label: '1 year membership', amount: 75000 }, { label: 'First 25 registrations only', amount: 60000, offer: true }],
@@ -124,6 +152,8 @@ const items = [
 const categories = [
   { id: 'day-out', eyebrow: 'For groups of 40 to 50', title: 'Day Out <em>Packages</em>', plain: 'Day Out Packages',
     lead: 'A full day in nature at Bhoothathankettu: forest trekking, the Open Jungle Park, lunch, Thattekad Bird Sanctuary and the Kuttampuzha riverside, with tea and snacks to end the day.' },
+  { id: 'schools', eyebrow: 'For principals, teachers and school management', title: 'School <em>Visits</em>', plain: 'School Visits',
+    lead: 'A refreshing break from the classroom: a day of nature walks, a jungle park visit with a magic show, Kerala-style lunch and local sightseeing. The Centre is happy to coordinate your visit in advance; contact the team to discuss your preferred date, group size and arrangements.' },
   { id: 'membership', eyebrow: 'For adults aged 50 and above', title: 'Family Wellness <em>Membership</em>', plain: 'Family Wellness Membership',
     lead: 'Monthly wellness visits for a couple, with Ayurvedic massage and room accommodation benefits. These are two separate brochures with different terms and prices. Please ask the Centre which membership offer is open now.' },
   { id: 'group-stay', eyebrow: 'For groups of 40 to 50', title: 'Group <em>Stay</em>', plain: 'Group Stay',

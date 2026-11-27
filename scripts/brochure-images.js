@@ -14,7 +14,8 @@ const MAP = {
   'WhatsApp Image 2026-11-27 at 8.51.07 AM.jpeg': 'premium-day-out-package',
   'WhatsApp Image 2026-11-27 at 8.51.06 AM.jpeg': 'family-wellness-membership-1-year',
   'WhatsApp Image 2026-11-27 at 8.51.06 AM (2).jpeg': 'family-wellness-membership-2-years',
-  'WhatsApp Image 2026-11-27 at 8.51.06 AM (1).jpeg': 'group-stay-package'
+  'WhatsApp Image 2026-11-27 at 8.51.06 AM (1).jpeg': 'group-stay-package',
+  'WhatsApp Image 2026-11-27 at 9.48.27 AM.jpeg': 'school-day-out-programme'
 };
 const WIDTHS = [480, 800];
 

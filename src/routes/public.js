@@ -104,13 +104,15 @@ get('/digital-brochure', async (req, res) => {
   const { items, categories } = brochure;
   const inr = n => '\u20B9' + Number(n).toLocaleString('en-IN');
   const by = slug => items.find(b => b.slug === slug);
-  const std = by('standard-day-out-package'), prem = by('premium-day-out-package'), grp = by('group-stay-package');
+  const std = by('standard-day-out-package'), prem = by('premium-day-out-package'), grp = by('group-stay-package'), sch = by('school-day-out-programme');
   // Questions answered only from the brochures and the Centre's published details.
   const faqs = [
     { question: 'How many people do the day out and group stay packages need?',
       answer: `The Standard Day Out, Premium Day Out and Group Stay packages are for groups of 40 to 50 people. Prices are per head: ${inr(std.prices[0].amount)} (Standard Day Out), ${inr(prem.prices[0].amount)} (Premium Day Out) and ${inr(grp.prices[0].amount)} (Group Stay).` },
     { question: 'What is the difference between the Standard and Premium Day Out packages?',
       answer: 'Both include 2 hours of forest trekking, an hour at the Open Jungle Park, lunch, Thattekad Bird Sanctuary sightseeing, a Kuttampuzha riverside forest visit and evening tea with snacks. The Premium package adds a 9.00 am breakfast and provides 3 cottage rooms for fresh-up instead of 2.' },
+    { question: 'Is there a programme for school groups?',
+      answer: `Yes. The School Day-Out Programme runs from 9.00 am to 4.30 pm with breakfast, a guided nature and forest walk, a jungle park visit and magic show, a Kerala-style lunch, local sightseeing and tea. It costs ${inr(sch.prices[0].amount)} per student below 15 years and ${inr(sch.prices[1].amount)} per student above 15 years. Please confirm inclusions, transport, teacher charges, timings and availability with the Centre before booking.` },
     { question: 'Who can join the Family Wellness Membership Programme?',
       answer: 'The membership is for two adults, both aged 50 or above. It includes one wellness visit every month (24 visits per couple in a year), Ayurvedic massage and room accommodation benefits for both members, and doctor consultation and wellness guidance, subject to the programme terms.' },
     { question: 'Where does the Group Stay Package stay overnight?',
@@ -123,14 +125,14 @@ get('/digital-brochure', async (req, res) => {
     url: config.siteUrl + '/digital-brochure', provider: { '@id': config.siteUrl + '/#business' },
     itemListElement: items.map(b => ({
       '@type': 'Offer', name: b.title, price: String(b.prices[0].amount), priceCurrency: 'INR', url: `${config.siteUrl}/digital-brochure#${b.slug}`,
-      description: [b.tagline, ...b.facts, ...b.prices.slice(1).map(p => `${p.label}: ${inr(p.amount)}`)].join('. '),
+      description: [b.tagline, ...b.facts, ...b.prices.map(p => `${p.label}: ${inr(p.amount)}`)].join('. '),
       image: seo.abs(b.image + '.jpg'),
       itemOffered: { '@type': 'Service', name: b.title, description: b.highlights.join('; ') }
     }))
   };
   page(req, res, 'digital-brochure', {
-    title: `Digital Brochure: Day Out, Group Stay and Wellness Membership | ${s.site_name}`,
-    description: `${s.site_name} digital brochure, Bhoothathankettu near Thattekad: Standard Day Out ${inr(std.prices[0].amount)} and Premium Day Out ${inr(prem.prices[0].amount)} per head, Group Stay ${inr(grp.prices[0].amount)} per head, and the Family Wellness Membership for adults 50+.`,
+    title: `Digital Brochure: Day Out, School Visits, Group Stay and Wellness Membership | ${s.site_name}`,
+    description: `${s.site_name} digital brochure, Bhoothathankettu near Thattekad: Day Out packages from ${inr(std.prices[0].amount)} per head, a School Day-Out Programme from ${inr(sch.prices[0].amount)} per student, Group Stay ${inr(grp.prices[0].amount)} per head, and the Family Wellness Membership for adults 50+.`,
     crumbs: [{ name: 'Digital Brochure', path: '/digital-brochure' }],
     image: prem.image + '.jpg',
     jsonld: [catalog, seo.faqLd(faqs)]

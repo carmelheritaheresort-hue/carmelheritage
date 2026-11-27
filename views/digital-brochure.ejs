@@ -53,7 +53,7 @@
               <% }) %>
             </div>
             <ul class="bro-facts plain"><% b.facts.forEach(function (f) { %><li><%= f %></li><% }) %></ul>
-            <h4 class="bro-sub"><%= b.category === 'membership' ? 'Membership benefits' : 'Included' %></h4>
+            <h4 class="bro-sub"><%= b.category === 'membership' ? 'Membership benefits' : b.category === 'schools' ? 'The day includes' : 'Included' %></h4>
             <ul class="bro-list"><% b.highlights.forEach(function (h) { %><li><%= h %></li><% }) %></ul>
             <% if (b.details.length) { %>
             <details class="bro-details">
@@ -64,6 +64,7 @@
               <% }) %>
             </details>
             <% } %>
+            <% if (b.note) { %><p class="bro-note"><%= b.note %></p><% } %>
             <div class="bro-actions">
               <a class="btn btn-whatsapp btn-lg bro-enquire" href="<%= waLink('Hello ' + s.site_name + ', I am interested in your ' + b.enquiry + '. Please share more details, availability and booking information.') %>" target="_blank" rel="noopener" data-track="WhatsApp Click">Enquire Now<span class="sr-only"> about the <%= b.title %> on WhatsApp (opens in a new tab)</span></a>
               <div class="bro-tools">

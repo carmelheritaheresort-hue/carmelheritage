@@ -661,6 +661,7 @@ input[readonly]:focus { box-shadow: none; border-color: var(--line); }
   .bro-grid.is-single .bro-media { margin: 1.1rem; align-self: start; }
   .bro-grid.is-single .bro-body { padding: 1.8rem 2rem 1.8rem .6rem; }
 }
+.bro-note { margin: .9rem 0 0; padding: .7rem .9rem; border-left: 3px solid var(--gold); background: var(--ivory); font-size: .9rem; font-style: italic; color: var(--muted); }
 .bro-toast { position: fixed; left: 50%; bottom: 6.5rem; z-index: 300; transform: translateX(-50%); max-width: calc(100% - 2rem); margin: 0; padding: .8rem 1.2rem; border-radius: 8px; background: var(--forest-deep); color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,.3); font-size: .92rem; }
 .bro-toast[hidden] { display: none; }
 

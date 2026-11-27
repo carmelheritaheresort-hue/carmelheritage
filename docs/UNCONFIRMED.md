@@ -50,6 +50,9 @@ The original images are shown unchanged. The page text copies their prices, time
 - **Group stay timings overlap:** trekking 10.30 am to 12.30 pm, and boating 12.00 noon to 3.00 pm.
 - Whether the per-head prices include GST, and what happens for groups under 40 or over 50.
 - The Standard Day Out brochure does not give a time for the evening tea.
+- **School Day-Out Programme** (6th brochure): ₹850 per student below 15 years, ₹1,100 per student above 15 years. Not stated: the price for students aged exactly 15, teacher charges, transport, and minimum group size (the brochure asks schools to confirm these). "Set amid 9.5 acres overlooking Bhoothathankettu Dam" is taken from the brochure.
+- The school brochure image shows an email (gm@carmeltourismvillage.com) and a website (www.carmeltourismvillage.com). The owner asked not to add the email to the site; neither appears in the page text.
+- **Address (owner confirmed):** "Ernakulam District" replaces "Kochi" in the site address (Admin > Settings > Brand and contact).
 
 ## Online booking and payments
 - Prices supplied by the owner: cottage Rs 4,500 and standard room Rs 1,500 per unit per night, plus GST. Confirm whether this is per room regardless of guests, and whether rates change by season or for extra guests.
